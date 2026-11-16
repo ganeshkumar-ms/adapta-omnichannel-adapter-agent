@@ -325,11 +325,14 @@ export default function App() {
       }))
 
     try {
-      const result = await adaptMessage({
-        file: fileToSend,
-        text: cleanText,
-        conversationHistory: historyPayload
-      })
+      const [result] = await Promise.all([
+        adaptMessage({
+          file: fileToSend,
+          text: cleanText,
+          conversationHistory: historyPayload
+        }),
+        new Promise(res => setTimeout(res, 900))
+      ])
 
       const aiMsg = {
         id: 'ai_' + Date.now(),
@@ -633,6 +636,7 @@ export default function App() {
                         <ErrorBoundary>
                           <AdaptaResultCard
                             data={msg.data}
+                            guardrails={msg.data?.guardrails || msg.guardrails}
                             onOpenDoc={(doc) => openDocument(doc || msg.docMeta)}
                           />
                         </ErrorBoundary>

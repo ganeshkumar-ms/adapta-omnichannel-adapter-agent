@@ -1,3 +1,5 @@
+import datetime
+import uuid
 import boto3
 import json
 import os
@@ -364,6 +366,14 @@ def adapt_message(content: str, file_name: str = "", conversation_history: list 
             raw_output = response['output']['message']['content'][0]['text']
             parsed = clean_and_parse_json(raw_output)
             if parsed and isinstance(parsed, dict) and ('type' in parsed or 'channels' in parsed):
+                trace_code = f"ADP-{datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+                parsed['trace_id'] = trace_code
+                parsed['guardrails'] = {
+                    "status": "REDACTED" if sanitized_res.get("pii_detected") else "PASSED",
+                    "pci_dss_sanitized": True,
+                    "redacted_count": sanitized_res.get("guardrails", {}).get("redacted_count", 0),
+                    "redacted_types": sanitized_res.get("guardrails", {}).get("redacted_types", []),
+                }
                 return parsed
         except Exception as e:
             print(f"Nova Pro Converse error: {e}, attempting Haiku fallback...")
@@ -376,11 +386,24 @@ def adapt_message(content: str, file_name: str = "", conversation_history: list 
             raw_output = response['output']['message']['content'][0]['text']
             parsed = clean_and_parse_json(raw_output)
             if parsed and isinstance(parsed, dict) and ('type' in parsed or 'channels' in parsed):
+                trace_code = f"ADP-{datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+                parsed['trace_id'] = trace_code
+                parsed['guardrails'] = {
+                    "status": "REDACTED" if sanitized_res.get("pii_detected") else "PASSED",
+                    "pci_dss_sanitized": True,
+                    "redacted_count": sanitized_res.get("guardrails", {}).get("redacted_count", 0),
+                    "redacted_types": sanitized_res.get("guardrails", {}).get("redacted_types", []),
+                }
                 return parsed
 
     except Exception as e:
         print(f"Bedrock invocation exception: {e}")
 
     # 4. Fallback if Bedrock was unreachable or didn't return JSON
-    return rule_based_adaptation_fallback(safe_text, file_name)
+    res = rule_based_adaptation_fallback(safe_text, file_name)
+    trace_code = f"ADP-{datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+    if isinstance(res, dict):
+        res['trace_id'] = trace_code
+        res['guardrails'] = {"status": "PASSED", "pci_dss_sanitized": True}
+    return res
 

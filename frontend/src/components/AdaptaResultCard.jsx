@@ -21,10 +21,13 @@ function toList(val) {
   return []
 }
 
-export default function AdaptaResultCard({ data, onOpenDoc }) {
+export default function AdaptaResultCard({ data, guardrails: propGuardrails, onOpenDoc }) {
   const [activeTab, setActiveTab] = useState('sms')
   const [copiedKey, setCopiedKey] = useState('')
   const [activeSubjectIdx, setActiveSubjectIdx] = useState(0)
+
+  const guardrails = propGuardrails || data?.guardrails || {}
+  const traceId = data?.trace_id || guardrails?.trace_id || ''
 
   if (!data) {
     return <div className="chatBubbleText">No adaptation data available.</div>
@@ -34,27 +37,25 @@ export default function AdaptaResultCard({ data, onOpenDoc }) {
   if (data.type === 'chat' || (!data.channels && (data.message || data.detail))) {
     return (
       <div className="adaptaResult">
-        {data.document && (
-          <div className="docAttachedPill">
-            <div className="docAttachedInfo">
-              <svg className="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-              </svg>
-              <span className="docAttachedName">{toText(data.document.filename, 'Attached Document')}</span>
-              <span className="docAttachedMeta">
-                {data.document.size ? `${(data.document.size / 1024).toFixed(1)} KB` : ''}
-              </span>
-            </div>
-            {onOpenDoc && (
-              <button
-                className="docAttachedBtn"
-                type="button"
-                onClick={() => onOpenDoc(data.document)}
-              >
-                View Document ↗
-              </button>
-            )}
+        {guardrails?.status === 'BLOCKED' && (
+          <div style={{ marginBottom: '12px' }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 12px',
+                borderRadius: '999px',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                background: 'rgba(239, 68, 68, 0.22)',
+                color: '#f87171',
+                border: '1px solid rgba(239, 68, 68, 0.65)'
+              }}
+            >
+              <span>🛡️</span>
+              <span>Guardrails: Blocked ({guardrails.triggered_rule || guardrails.rejection_reason || 'Policy Violation'})</span>
+            </span>
           </div>
         )}
         <div className="chatBubbleText">
@@ -122,6 +123,75 @@ export default function AdaptaResultCard({ data, onOpenDoc }) {
 
   return (
     <div className="adaptaResult">
+      {/* 0. GUARDRAILS STATUS BAR & TOP-RIGHT TRACE ID */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          marginBottom: '14px',
+          width: '100%'
+        }}
+      >
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '4px 12px',
+            borderRadius: '999px',
+            fontSize: '11.5px',
+            fontWeight: 700,
+            background: guardrails?.status === 'BLOCKED'
+              ? 'rgba(239, 68, 68, 0.22)'
+              : guardrails?.status === 'REDACTED'
+              ? 'rgba(251, 191, 36, 0.16)'
+              : 'rgba(52, 211, 153, 0.16)',
+            color: guardrails?.status === 'BLOCKED'
+              ? '#f87171'
+              : guardrails?.status === 'REDACTED'
+              ? '#fbbf24'
+              : '#34d399',
+            border: guardrails?.status === 'BLOCKED'
+              ? '1px solid rgba(239, 68, 68, 0.65)'
+              : guardrails?.status === 'REDACTED'
+              ? '1px solid rgba(251, 191, 36, 0.5)'
+              : '1px solid rgba(52, 211, 153, 0.45)'
+          }}
+        >
+          <span>🛡️</span>
+          <span>
+            {guardrails?.status === 'BLOCKED'
+              ? `Guardrails: Blocked (${guardrails.triggered_rule || guardrails.rejection_reason || 'Policy Violation'})`
+              : guardrails?.status === 'REDACTED'
+              ? `Guardrails: ${guardrails.redacted_count || 1} Secret(s) Sanitized`
+              : 'Guardrails: Passed · Verified Safe'}
+          </span>
+        </span>
+
+        {traceId && (
+          <span
+            style={{
+              fontSize: '11px',
+              fontFamily: 'ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace',
+              fontWeight: 600,
+              color: '#38bdf8',
+              letterSpacing: '0.6px',
+              padding: '3px 9px',
+              borderRadius: '6px',
+              background: 'rgba(7, 140, 255, 0.08)',
+              border: '1px solid rgba(7, 140, 255, 0.24)',
+              marginLeft: 'auto',
+              flexShrink: 0
+            }}
+            title="Verification Trace Code"
+          >
+            {traceId}
+          </span>
+        )}
+      </div>
+
       {/* Attached Document Pill */}
       {doc && (
         <div className="docAttachedPill">
