@@ -293,7 +293,7 @@ header {
   background: rgba(7, 140, 255, 0.12);
   border: 1px solid var(--line);
   border-radius: 12px;
-  color: #ffd0f2;
+  color: #f0f7ff;
   font-size: 12px;
 }
 
@@ -568,12 +568,12 @@ header {
 }
 
 .histIcon.edit {
-  color: #ff00ad;
+  color: #078cff;
 }
 
 .histIcon.edit:hover {
   background: rgba(7, 140, 255, 0.25);
-  border-color: #ff00ad;
+  border-color: #078cff;
   color: #fff;
 }
 
@@ -631,7 +631,7 @@ header {
   padding: 6px 10px;
   border: 1px solid var(--a1);
   border-radius: 8px;
-  background: #15000e;
+  background: #020c16;
   color: #fff;
   font-size: 14px;
   outline: 0;
@@ -895,7 +895,7 @@ header {
 .docAttachedBtn {
   border: 1px solid rgba(7, 140, 255, 0.4);
   background: rgba(7, 140, 255, 0.15);
-  color: #ffd0f2;
+  color: #f0f7ff;
   border-radius: 8px;
   padding: 4px 10px;
   font-size: 11px;
@@ -1089,7 +1089,7 @@ header {
 .copyBtn {
   border: 1px solid rgba(7, 140, 255, 0.35);
   background: rgba(7, 140, 255, 0.1);
-  color: #ffd0f2;
+  color: #f0f7ff;
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 10px;
@@ -2118,7 +2118,7 @@ header {
 }
 
 .inAppModal {
-  background: #2b0821;
+  background: #0a3154;
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 18px;
@@ -2389,7 +2389,7 @@ header {
     border-radius: 999px;
     border: 1px solid var(--line);
     background: rgba(7, 140, 255, 0.1);
-    color: #ffd0f2;
+    color: #f0f7ff;
     font-size: 10px;
     font-weight: 700;
     cursor: pointer;
