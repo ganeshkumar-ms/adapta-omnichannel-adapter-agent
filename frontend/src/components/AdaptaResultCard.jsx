@@ -22,8 +22,9 @@ function toList(val) {
 }
 
 export default function AdaptaResultCard({ data, onOpenDoc }) {
-  const [activeTab, setActiveTab] = useState('email')
+  const [activeTab, setActiveTab] = useState('sms')
   const [copiedKey, setCopiedKey] = useState('')
+  const [activeSubjectIdx, setActiveSubjectIdx] = useState(0)
 
   if (!data) {
     return <div className="chatBubbleText">No adaptation data available.</div>
@@ -87,12 +88,12 @@ export default function AdaptaResultCard({ data, onOpenDoc }) {
     setTimeout(() => setCopiedKey(''), 2000)
   }
 
-  // Safe channel extractions
+  // Channel extractions
   const emailData = channels.email || {}
   const emailSubjects = toList(emailData.subject_lines || emailData.subject)
   const emailPreview = toText(emailData.preview_text || emailData.preheader)
   const emailBody = toText(typeof emailData === 'string' ? emailData : emailData.body)
-  const emailCta = toText(emailData.cta?.text || emailData.cta)
+  const emailCta = toText(emailData.cta?.text || emailData.cta, 'Learn More →')
 
   const smsData = channels.sms || {}
   const smsText = toText(typeof smsData === 'string' ? smsData : (smsData.text || smsData.body || smsData.message))
@@ -103,9 +104,9 @@ export default function AdaptaResultCard({ data, onOpenDoc }) {
   const waText = toText(typeof waData === 'string' ? waData : (waData.text || waData.message || waData.body))
 
   const pushData = channels.push || {}
-  const pushTitle = toText(typeof pushData === 'string' ? 'Notification' : pushData.title, 'Update Alert')
+  const pushTitle = toText(typeof pushData === 'string' ? 'Notification' : pushData.title, 'Important Update')
   const pushBody = toText(typeof pushData === 'string' ? pushData : pushData.body)
-  const pushLink = toText(pushData.deep_link || pushData.target_url)
+  const pushLink = toText(pushData.deep_link || pushData.target_url, 'app://notifications/view')
 
   const liData = channels.linkedin || {}
   const liPost = toText(typeof liData === 'string' ? liData : (liData.post || liData.body || liData.content))
@@ -117,7 +118,7 @@ export default function AdaptaResultCard({ data, onOpenDoc }) {
   const inAppData = channels.in_app || {}
   const inAppHead = toText(typeof inAppData === 'string' ? 'Announcement' : (inAppData.headline || inAppData.title), 'What’s New')
   const inAppBody = toText(typeof inAppData === 'string' ? inAppData : inAppData.body)
-  const inAppBtn = toText(inAppData.action_button || inAppData.cta, 'View Update')
+  const inAppBtn = toText(inAppData.action_button || inAppData.cta, 'Explore Now')
 
   return (
     <div className="adaptaResult">
@@ -198,14 +199,14 @@ export default function AdaptaResultCard({ data, onOpenDoc }) {
       {/* Channel Navigation Tabs */}
       <div className="channelTabs">
         {[
-          { key: 'email', label: 'Email' },
-          { key: 'sms', label: 'SMS' },
-          { key: 'whatsapp', label: 'WhatsApp' },
-          { key: 'push', label: 'Push' },
-          { key: 'linkedin', label: 'LinkedIn' },
-          { key: 'twitter', label: 'X (Twitter)' },
-          { key: 'in_app', label: 'In-App' },
-          { key: 'payload', label: 'Payload (JSON)' }
+          { key: 'sms', label: '💬 SMS (iOS / Android)' },
+          { key: 'linkedin', label: '💼 LinkedIn' },
+          { key: 'twitter', label: '𝕏 Post & Thread' },
+          { key: 'email', label: '✉️ Email Client' },
+          { key: 'whatsapp', label: '📱 WhatsApp' },
+          { key: 'push', label: '🔔 Mobile Push' },
+          { key: 'in_app', label: '⚡ In-App Modal' },
+          { key: 'payload', label: '{ } JSON Payload' }
         ].map(tab => (
           <button
             key={tab.key}
@@ -220,164 +221,80 @@ export default function AdaptaResultCard({ data, onOpenDoc }) {
 
       {/* Channel Content Body */}
       <div className="channelContentBox">
-        {/* EMAIL TAB */}
-        {activeTab === 'email' && (
-          <div className="channelVariant emailVariant">
-            <div className="variantHeader">
-              <span className="variantTitle">Email Campaign Variant</span>
-              <button
-                className="copyBtn"
-                type="button"
-                onClick={() => copyText(
-                  `Subject Lines:\n${emailSubjects.join('\n')}\nPreheader: ${emailPreview}\n\n${emailBody}\n\nCTA: ${emailCta}`,
-                  'email'
-                )}
-              >
-                {copiedKey === 'email' ? '✓ Copied' : 'Copy All'}
-              </button>
-            </div>
 
-            {emailSubjects.length > 0 && (
-              <div className="emailSection">
-                <span className="fieldLabel">A/B Testing Subject Lines:</span>
-                <div className="subjectPills">
-                  {emailSubjects.map((sub, idx) => (
-                    <div key={idx} className="subjectPill">
-                      <span className="subTag">Option {idx + 1}</span>
-                      <span className="subText">{toText(sub)}</span>
-                      <button
-                        className="pillCopy"
-                        type="button"
-                        onClick={() => copyText(toText(sub), `sub_${idx}`)}
-                      >
-                        {copiedKey === `sub_${idx}` ? '✓' : 'Copy'}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {emailPreview && (
-              <div className="emailSection">
-                <span className="fieldLabel">Preheader / Preview Text:</span>
-                <div className="previewTextBox">
-                  <span>{emailPreview}</span>
-                  <small className="charTag">{emailPreview.length} chars</small>
-                </div>
-              </div>
-            )}
-
-            <div className="emailSection">
-              <span className="fieldLabel">Email Body Copy:</span>
-              <pre className="emailBodyBox">{emailBody || 'No email body provided.'}</pre>
-            </div>
-
-            {emailCta && (
-              <div className="emailSection ctaSection">
-                <span className="fieldLabel">Primary Call-to-Action:</span>
-                <div className="ctaPill">
-                  <span>{emailCta}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* SMS TAB */}
+        {/* 1. REALISTIC SMS (iOS / iMessage) */}
         {activeTab === 'sms' && (
           <div className="channelVariant smsVariant">
             <div className="variantHeader">
-              <span className="variantTitle">SMS Copy (Single Part &lt;160 Chars)</span>
+              <span className="variantTitle">SMS / iMessage Broadcast</span>
               <button
                 className="copyBtn"
                 type="button"
                 onClick={() => copyText(smsText, 'sms')}
               >
-                {copiedKey === 'sms' ? '✓ Copied' : 'Copy SMS'}
+                {copiedKey === 'sms' ? '✓ Copied' : 'Copy Text'}
               </button>
             </div>
 
-            <div className="smsPhoneMockup">
-              <div className="smsBubble">
-                {smsText || 'No SMS text generated.'}
-              </div>
-              <div className="smsFooter">
-                <span className="smsCount">
-                  {smsCount} / 160 characters
-                </span>
-                <span className="smsCompliance">
-                  {smsCompliance}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* WHATSAPP TAB */}
-        {activeTab === 'whatsapp' && (
-          <div className="channelVariant whatsappVariant">
-            <div className="variantHeader">
-              <span className="variantTitle">WhatsApp Rich Broadcast</span>
-              <button
-                className="copyBtn"
-                type="button"
-                onClick={() => copyText(waText, 'whatsapp')}
-              >
-                {copiedKey === 'whatsapp' ? '✓ Copied' : 'Copy WhatsApp'}
-              </button>
-            </div>
-
-            <div className="whatsappPhoneMockup">
-              <div className="whatsappBubble">
-                <pre className="waText">{waText || 'No WhatsApp text generated.'}</pre>
-                <div className="waTime">
-                  <span>Just now</span>
-                  <span className="waCheck">✓✓</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* PUSH TAB */}
-        {activeTab === 'push' && (
-          <div className="channelVariant pushVariant">
-            <div className="variantHeader">
-              <span className="variantTitle">Mobile Push Notification</span>
-              <button
-                className="copyBtn"
-                type="button"
-                onClick={() => copyText(`${pushTitle}\n${pushBody}`, 'push')}
-              >
-                {copiedKey === 'push' ? '✓ Copied' : 'Copy Push'}
-              </button>
-            </div>
-
-            <div className="pushPhoneMockup">
-              <div className="pushNotificationCard">
-                <div className="pushTop">
-                  <div className="pushApp">
-                    <span className="pushAppIcon">⚡</span>
-                    <span className="pushAppName">APP NOTIFICATION</span>
+            <div className="phoneShell">
+              <div className="phoneScreen">
+                {/* iOS Status Bar */}
+                <div className="iosStatusBar">
+                  <span className="iosTime">9:41</span>
+                  <div className="iosDynamicIsland" />
+                  <div className="iosStatusIcons">
+                    <span>5G</span>
+                    <svg width="18" height="10" viewBox="0 0 18 10" fill="currentColor">
+                      <rect x="0" y="0" width="15" height="10" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1" />
+                      <rect x="2" y="2" width="10" height="6" rx="1.5" />
+                      <path d="M16 3.5v3" stroke="currentColor" strokeWidth="1" />
+                    </svg>
                   </div>
-                  <span className="pushTime">NOW</span>
                 </div>
-                <div className="pushTitle">{pushTitle}</div>
-                <div className="pushBody">{pushBody || 'No push notification body.'}</div>
-                {pushLink && (
-                  <div className="pushLink">Target: {pushLink}</div>
-                )}
+
+                {/* iMessage Header */}
+                <div className="imessageHeader">
+                  <span className="imessageBack">‹ Messages</span>
+                  <div className="imessageContact">
+                    <div className="imessageAvatar">EP</div>
+                    <span className="imessageName">Enterprise Alerts</span>
+                    <span className="imessageType">iMessage</span>
+                  </div>
+                  <span className="imessageAction">⋯</span>
+                </div>
+
+                {/* Messages Body */}
+                <div className="imessageBody">
+                  <div className="imessageDate">Today 9:41 AM</div>
+                  <div className="smsBubbleWrap">
+                    <div className="smsBubbleReal">
+                      {smsText || 'No SMS text provided.'}
+                    </div>
+                    <span className="smsDelivered">Delivered</span>
+                  </div>
+                </div>
+
+                {/* Footer specs & input bar */}
+                <div className="smsMetaBar">
+                  <span className="smsCountPill">{smsCount} / 160 characters</span>
+                  <span className="smsCompliancePill">{smsCompliance}</span>
+                </div>
+
+                <div className="imessageInputBar">
+                  <div className="imessageInputIcon">📷</div>
+                  <div className="imessageFakeInput">iMessage</div>
+                  <div className="imessageSendIcon">↑</div>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* LINKEDIN TAB */}
+        {/* 2. REALISTIC LINKEDIN POST */}
         {activeTab === 'linkedin' && (
           <div className="channelVariant linkedinVariant">
             <div className="variantHeader">
-              <span className="variantTitle">LinkedIn B2B Thought Leadership</span>
+              <span className="variantTitle">LinkedIn B2B Feed Publication</span>
               <button
                 className="copyBtn"
                 type="button"
@@ -387,24 +304,83 @@ export default function AdaptaResultCard({ data, onOpenDoc }) {
               </button>
             </div>
 
-            <div className="linkedinMockup">
-              <div className="linkedinAuthor">
-                <div className="liAvatar">A</div>
-                <div>
-                  <div className="liName">Company Update</div>
-                  <div className="liRole">Omnichannel Strategy · 1st</div>
+            <div className="linkedinFeedCard">
+              {/* Header */}
+              <div className="liCardHeader">
+                <div className="liAuthorBlock">
+                  <div className="liProfileAvatar">
+                    <span>EP</span>
+                    <div className="liBadgeCheck">✓</div>
+                  </div>
+                  <div className="liAuthorInfo">
+                    <div className="liNameRow">
+                      <span className="liAuthorName">Enterprise Pulse</span>
+                      <span className="liFollowDot">· 1st</span>
+                      <button type="button" className="liFollowBtn">+ Follow</button>
+                    </div>
+                    <span className="liHeadline">Official Strategic Communications · Global Operations</span>
+                    <span className="liTimestamp">1h · Edited · 🌐</span>
+                  </div>
+                </div>
+                <button type="button" className="liMenuBtn">•••</button>
+              </div>
+
+              {/* Body Content */}
+              <div className="liPostBody">
+                {liPost.split('\n\n').map((para, pIdx) => (
+                  <p key={pIdx}>
+                    {para.split(' ').map((word, wIdx) => {
+                      if (word.startsWith('#')) {
+                        return <span key={wIdx} className="liHashtag">{word} </span>
+                      }
+                      if (word.startsWith('http')) {
+                        return <span key={wIdx} className="liLink">{word} </span>
+                      }
+                      return word + ' '
+                    })}
+                  </p>
+                ))}
+              </div>
+
+              {/* Engagement counts */}
+              <div className="liSocialCounts">
+                <div className="liReactionIcons">
+                  <span className="liReactBubble liBlue">👍</span>
+                  <span className="liReactBubble liGreen">👏</span>
+                  <span className="liReactBubble liRed">❤️</span>
+                  <span className="liReactionTotal">1,482</span>
+                </div>
+                <div className="liCommentCounts">
+                  <span>84 comments</span>
+                  <span>·</span>
+                  <span>32 reposts</span>
                 </div>
               </div>
-              <pre className="liContent">{liPost || 'No LinkedIn post generated.'}</pre>
+
+              {/* Action Buttons */}
+              <div className="liActionBar">
+                <button type="button" className="liActionBtn">
+                  <span>👍</span> Like
+                </button>
+                <button type="button" className="liActionBtn">
+                  <span>💬</span> Comment
+                </button>
+                <button type="button" className="liActionBtn">
+                  <span>🔁</span> Repost
+                </button>
+                <button type="button" className="liActionBtn">
+                  <span>✈️</span> Send
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* TWITTER TAB */}
+        {/* 3. REALISTIC X / TWITTER POST */}
         {activeTab === 'twitter' && (
           <div className="channelVariant twitterVariant">
             <div className="variantHeader">
-              <span className="variantTitle">X / Twitter Tweet & Thread</span>
+              <span className="variantTitle">𝕏 / Twitter Post & Thread</span>
               <button
                 className="copyBtn"
                 type="button"
@@ -417,19 +393,91 @@ export default function AdaptaResultCard({ data, onOpenDoc }) {
               </button>
             </div>
 
-            <div className="tweetMockup">
-              <div className="mainTweet">
-                <span className="tweetLabel">Main Tweet:</span>
-                <p className="tweetText">{twTweet || 'No tweet text generated.'}</p>
-                <small className="charTag">{twTweet.length} / 280 chars</small>
+            <div className="xPostCard">
+              <div className="xPostHeader">
+                <div className="xAuthorWrap">
+                  <div className="xAvatar">𝕏</div>
+                  <div className="xAuthorText">
+                    <div className="xNameRow">
+                      <span className="xAuthorName">Enterprise Pulse</span>
+                      <svg className="xVerifiedBadge" viewBox="0 0 24 24" width="16" height="16">
+                        <circle cx="12" cy="12" r="10" fill="#1d9bf0" />
+                        <path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                      </svg>
+                    </div>
+                    <span className="xHandle">@EnterprisePulse · 2h</span>
+                  </div>
+                </div>
+                <div className="xTopLogo">𝕏</div>
               </div>
 
+              {/* Tweet Text */}
+              <div className="xPostContent">
+                {twTweet.split(' ').map((word, wIdx) => {
+                  if (word.startsWith('#') || word.startsWith('$')) {
+                    return <span key={wIdx} className="xHighlight">{word} </span>
+                  }
+                  if (word.startsWith('@')) {
+                    return <span key={wIdx} className="xMention">{word} </span>
+                  }
+                  if (word.startsWith('http')) {
+                    return <span key={wIdx} className="xLink">{word} </span>
+                  }
+                  return word + ' '
+                })}
+              </div>
+
+              {/* Timestamp & Views */}
+              <div className="xTimestampRow">
+                <span>10:42 AM · Nov 16, 2026</span>
+                <span>·</span>
+                <span className="xViews">58.4K Views</span>
+              </div>
+
+              {/* Metrics & Action Bar */}
+              <div className="xActionBar">
+                <div className="xActionItem">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                  </svg>
+                  <span>142</span>
+                </div>
+                <div className="xActionItem">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M17 1l4 4-4 4" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><path d="M7 23l-4-4 4-4" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                  </svg>
+                  <span>389</span>
+                </div>
+                <div className="xActionItem">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
+                  <span>2.1K</span>
+                </div>
+                <div className="xActionItem">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                  </svg>
+                  <span>412</span>
+                </div>
+                <div className="xActionItem">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Thread continuation */}
               {twThreads.length > 0 && (
-                <div className="tweetThread">
-                  <span className="tweetLabel">Thread Follow-ups:</span>
-                  {twThreads.map((pt, idx) => (
-                    <div key={idx} className="threadItem">
-                      <span>{toText(pt)}</span>
+                <div className="xThreadBox">
+                  <div className="xThreadLabel">Thread Follow-ups:</div>
+                  {twThreads.map((item, idx) => (
+                    <div key={idx} className="xThreadItem">
+                      <div className="xThreadLine" />
+                      <div className="xThreadContent">
+                        <span className="xThreadIndex">{idx + 2}/</span>
+                        <p>{toText(item)}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -438,11 +486,196 @@ export default function AdaptaResultCard({ data, onOpenDoc }) {
           </div>
         )}
 
-        {/* IN-APP TAB */}
+        {/* 4. REALISTIC EMAIL CLIENT */}
+        {activeTab === 'email' && (
+          <div className="channelVariant emailVariant">
+            <div className="variantHeader">
+              <span className="variantTitle">Desktop Email Client</span>
+              <button
+                className="copyBtn"
+                type="button"
+                onClick={() => copyText(
+                  `Subject Lines:\n${emailSubjects.join('\n')}\nPreheader: ${emailPreview}\n\n${emailBody}\n\nCTA: ${emailCta}`,
+                  'email'
+                )}
+              >
+                {copiedKey === 'email' ? '✓ Copied' : 'Copy All'}
+              </button>
+            </div>
+
+            <div className="emailClientWindow">
+              {/* Window Bar */}
+              <div className="emailWindowBar">
+                <div className="emailWindowControls">
+                  <span className="winDot winClose" />
+                  <span className="winDot winMin" />
+                  <span className="winDot winMax" />
+                </div>
+                <span className="emailWindowTitle">Enterprise Notification — Official Dispatch</span>
+                <span className="emailSecurityTag">🔒 TLS Encrypted</span>
+              </div>
+
+              {/* Email Envelope Fields */}
+              <div className="emailEnvelope">
+                <div className="emailMetaRow">
+                  <span className="emailMetaLabel">From:</span>
+                  <span className="emailMetaValue">Enterprise Dispatch <code>&lt;dispatch@enterprise.domain&gt;</code></span>
+                </div>
+                <div className="emailMetaRow">
+                  <span className="emailMetaLabel">To:</span>
+                  <span className="emailMetaValue">Valued Client <code>&lt;recipient@enterprise.com&gt;</code></span>
+                </div>
+                <div className="emailMetaRow">
+                  <span className="emailMetaLabel">Date:</span>
+                  <span className="emailMetaValue">Today, 10:30 AM (Just now)</span>
+                </div>
+
+                {emailSubjects.length > 0 && (
+                  <div className="emailMetaRow" style={{ alignItems: 'flex-start' }}>
+                    <span className="emailMetaLabel">Subject:</span>
+                    <div className="emailSubjectsWrap">
+                      <div className="emailActiveSubject">
+                        <strong>{toText(emailSubjects[activeSubjectIdx] || emailSubjects[0])}</strong>
+                      </div>
+                      {emailSubjects.length > 1 && (
+                        <div className="emailSubjectTabs">
+                          <span style={{ fontSize: '11px', color: '#849bb4', marginRight: '4px' }}>A/B Variants:</span>
+                          {emailSubjects.map((sub, sIdx) => (
+                            <button
+                              key={sIdx}
+                              type="button"
+                              className={`subVariantBtn${activeSubjectIdx === sIdx ? ' active' : ''}`}
+                              onClick={() => setActiveSubjectIdx(sIdx)}
+                            >
+                              Variant {sIdx + 1}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {emailPreview && (
+                  <div className="emailPreheaderRow">
+                    <span className="emailMetaLabel">Preview:</span>
+                    <span className="emailPreheaderText">{emailPreview}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Email Body Canvas */}
+              <div className="emailBodyCanvas">
+                <div className="emailContentCard">
+                  <div className="emailContentLogo">ENTERPRISE COMMUNICATIONS</div>
+                  <div className="emailBodyText">
+                    {emailBody ? emailBody.split('\n\n').map((para, idx) => (
+                      <p key={idx}>{para}</p>
+                    )) : 'No email body generated.'}
+                  </div>
+
+                  {emailCta && (
+                    <div className="emailCtaArea">
+                      <a href="#action" onClick={(e) => e.preventDefault()} className="emailCtaButton">
+                        {emailCta}
+                      </a>
+                    </div>
+                  )}
+
+                  <div className="emailFooterSignoff">
+                    <p>Best regards,<br /><strong>The Enterprise Operations Team</strong></p>
+                    <div className="emailComplianceFooter">
+                      This is an official administrative communication. To update notification preferences or unsubscribe, visit the Customer Preference Center.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 5. REALISTIC WHATSAPP */}
+        {activeTab === 'whatsapp' && (
+          <div className="channelVariant whatsappVariant">
+            <div className="variantHeader">
+              <span className="variantTitle">WhatsApp Business Broadcast</span>
+              <button
+                className="copyBtn"
+                type="button"
+                onClick={() => copyText(waText, 'whatsapp')}
+              >
+                {copiedKey === 'whatsapp' ? '✓ Copied' : 'Copy WhatsApp'}
+              </button>
+            </div>
+
+            <div className="whatsappPhoneMockup">
+              <div className="waChatHeader">
+                <div className="waAvatar">🏢</div>
+                <div className="waContactInfo">
+                  <div className="waContactName">
+                    Enterprise Updates <span className="waVerified">✓</span>
+                  </div>
+                  <span className="waOfficial">Official Business Account</span>
+                </div>
+              </div>
+
+              <div className="whatsappBubble">
+                <pre className="waText">{waText || 'No WhatsApp text generated.'}</pre>
+                <div className="waTime">
+                  <span>Just now</span>
+                  <span className="waCheck">✓✓</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 6. REALISTIC MOBILE PUSH NOTIFICATION */}
+        {activeTab === 'push' && (
+          <div className="channelVariant pushVariant">
+            <div className="variantHeader">
+              <span className="variantTitle">Mobile Push (Lockscreen)</span>
+              <button
+                className="copyBtn"
+                type="button"
+                onClick={() => copyText(`${pushTitle}\n${pushBody}`, 'push')}
+              >
+                {copiedKey === 'push' ? '✓ Copied' : 'Copy Push'}
+              </button>
+            </div>
+
+            <div className="pushPhoneShell">
+              <div className="pushLockscreen">
+                <div className="lockscreenClock">
+                  <div className="lockTime">09:41</div>
+                  <div className="lockDate">Monday, November 16</div>
+                </div>
+
+                <div className="pushBanner">
+                  <div className="pushBannerHeader">
+                    <div className="pushAppBadge">
+                      <span className="pushIcon">⚡</span>
+                      <span className="pushAppName">ENTERPRISE APP</span>
+                    </div>
+                    <span className="pushTimeLabel">now</span>
+                  </div>
+                  <div className="pushTitleText">{pushTitle}</div>
+                  <div className="pushBodyText">{pushBody || 'No push notification body.'}</div>
+                  <div className="pushActionsRow">
+                    <button type="button" className="pushActionBtn primary">Open</button>
+                    <button type="button" className="pushActionBtn">Dismiss</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 7. IN-APP MODAL */}
         {activeTab === 'in_app' && (
           <div className="channelVariant inAppVariant">
             <div className="variantHeader">
-              <span className="variantTitle">In-App Announcement Modal / Banner</span>
+              <span className="variantTitle">In-App Announcement Modal</span>
               <button
                 className="copyBtn"
                 type="button"
@@ -470,7 +703,7 @@ export default function AdaptaResultCard({ data, onOpenDoc }) {
           </div>
         )}
 
-        {/* PAYLOAD TAB */}
+        {/* 8. PAYLOAD TAB */}
         {activeTab === 'payload' && (
           <div className="channelVariant payloadVariant">
             <div className="variantHeader">
