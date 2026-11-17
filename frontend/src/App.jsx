@@ -18,9 +18,9 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '16px', background: '#3b0826', borderRadius: '12px', border: '1px solid #ff00ad55', color: '#ffd0f2', margin: '10px 0' }}>
+        <div style={{ padding: '16px', background: '#051a2c', borderRadius: '12px', border: '1px solid rgba(7, 140, 255, 0.3)', color: '#f0f7ff', margin: '10px 0' }}>
           <div style={{ fontWeight: 'bold', marginBottom: '6px' }}>Display Recovery</div>
-          <div style={{ fontSize: '12px', color: '#ff9ee6' }}>{this.state.error?.message || 'Unable to render this card.'}</div>
+          <div style={{ fontSize: '12px', color: '#38bdf8' }}>{this.state.error?.message || 'Unable to render this card.'}</div>
         </div>
       )
     }
@@ -297,6 +297,14 @@ export default function App() {
 
     const currentList = baseMessages !== null ? baseMessages : messages
     const localUrl = fileToSend ? URL.createObjectURL(fileToSend) : null
+    let previewText = ''
+    if (fileToSend) {
+      try {
+        previewText = await fileToSend.slice(0, 15000).text()
+      } catch (e) {
+        // binary files (pdf/images)
+      }
+    }
     const userMsg = {
       id: 'usr_' + Date.now(),
       role: 'user',
@@ -305,7 +313,8 @@ export default function App() {
         name: fileToSend.name,
         size: fileToSend.size,
         type: fileToSend.type,
-        localBlobUrl: localUrl
+        localBlobUrl: localUrl,
+        preview: previewText
       } : null
     }
 
@@ -333,6 +342,14 @@ export default function App() {
         }),
         new Promise(res => setTimeout(res, 900))
       ])
+
+      if (result?.document && userMsg.file) {
+        userMsg.file = {
+          ...userMsg.file,
+          ...result.document,
+          preview: userMsg.file.preview || result.document.preview || ''
+        }
+      }
 
       const aiMsg = {
         id: 'ai_' + Date.now(),
@@ -482,15 +499,17 @@ export default function App() {
             </div>
 
             {selectedFile && (
-              <div className="filePill">
-                <span>Attached · {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
-                <button
-                  className="filePillRemove"
-                  type="button"
-                  onClick={() => setSelectedFile(null)}
-                >
-                  ✕
-                </button>
+              <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '14px' }}>
+                <div className="filePill">
+                  <span>📎 Attached · {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                  <button
+                    className="filePillRemove"
+                    type="button"
+                    onClick={() => setSelectedFile(null)}
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
             )}
 
@@ -617,15 +636,28 @@ export default function App() {
                     return (
                       <div key={msg.id} className="bubble user">
                         {msg.file && (
-                          <div style={{ marginBottom: msg.content ? '8px' : '0', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
-                            <svg className="icon" viewBox="0 0 24 24" width="14" height="14">
-                              <path d="m21.4 11.6-8.9 8.9a6 6 0 0 1-8.5-8.5l9.3-9.3a4 4 0 0 1 5.7 5.7l-9.3 9.3a2 2 0 0 1-2.8-2.8l8.6-8.6" />
-                            </svg>
-                            <b>{msg.file.name}</b>
-                            <span style={{ opacity: 0.8 }}>({(msg.file.size / 1024).toFixed(1)} KB)</span>
-                          </div>
+                          <button
+                            type="button"
+                            className="userFileCard"
+                            onClick={() => openDocument(msg.file)}
+                            title="Open document viewer"
+                          >
+                            <div className="userFileHeader">
+                              <div className="userFileLeft">
+                                <span className="userFileIcon" aria-hidden="true">📄</span>
+                                <div className="userFileInfo">
+                                  <span className="userFileName" title={msg.file.name}>{msg.file.name}</span>
+                                  <span className="userFileMeta">
+                                    {msg.file.size ? `${(msg.file.size / 1024).toFixed(1)} KB` : 'DOCUMENT'}
+                                    {msg.file.words ? ` · ${msg.file.words} words` : ''}
+                                  </span>
+                                </div>
+                              </div>
+                              <span className="userFileViewBtn">Open ↗</span>
+                            </div>
+                          </button>
                         )}
-                        {msg.content && <div>{msg.content}</div>}
+                        {msg.content && <div style={{ marginTop: msg.file ? '8px' : '0' }}>{msg.content}</div>}
                       </div>
                     )
                   }

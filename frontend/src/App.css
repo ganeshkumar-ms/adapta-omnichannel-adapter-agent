@@ -64,7 +64,7 @@ button, input, textarea {
   position: relative;
   overflow: hidden;
   background: radial-gradient(circle at 50% -10%, rgba(7, 140, 255, 0.18), transparent 40%),
-              radial-gradient(circle at 95% 90%, rgba(101, 0, 70, 0.22), transparent 35%),
+              radial-gradient(circle at 95% 90%, rgba(7, 140, 255, 0.08), transparent 35%),
               var(--bg);
 }
 
@@ -73,7 +73,7 @@ button, input, textarea {
   inset: -35%;
   pointer-events: none;
   background: radial-gradient(circle at 24% 25%, rgba(7, 140, 255, 0.22), transparent 23%),
-              radial-gradient(circle at 78% 70%, rgba(101, 0, 70, 0.25), transparent 25%);
+              radial-gradient(circle at 78% 70%, rgba(7, 140, 255, 0.08), transparent 25%);
   filter: blur(20px);
   animation: drift 15s ease-in-out infinite alternate;
 }
@@ -118,7 +118,7 @@ header {
   font-size: 21px;
   font-weight: 850;
   letter-spacing: 7px;
-  background: linear-gradient(90deg, #fff, var(--a1), #ff77d9);
+  background: linear-gradient(90deg, #fff, var(--a1), #38bdf8);
   -webkit-background-clip: text;
   color: transparent;
 }
@@ -129,7 +129,7 @@ header {
   justify-content: center;
   border: 1px solid var(--line);
   background: rgba(7, 140, 255, 0.08);
-  color: #f5cbe7;
+  color: #cbd5e1;
   border-radius: 999px;
   padding: 9px 16px;
   font-size: 11px;
@@ -178,7 +178,7 @@ header {
 }
 
 .home h1 span {
-  background: linear-gradient(90deg, #fff, var(--a1), #ff77d9);
+  background: linear-gradient(90deg, #fff, var(--a1), #38bdf8);
   -webkit-background-clip: text;
   color: transparent;
 }
@@ -222,7 +222,7 @@ header {
   gap: 8px;
   border: 1px solid var(--line);
   border-radius: 22px;
-  background: rgba(38, 7, 28, 0.95);
+  background: #051a2c;
   box-shadow: 0 25px 70px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(22px);
 }
@@ -239,7 +239,7 @@ header {
 }
 
 .prompt input::placeholder {
-  color: #9f7b94;
+  color: #849bb4;
 }
 
 .startAttach, .plus {
@@ -292,25 +292,28 @@ header {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  margin: 12px auto 0 !important;
+  margin: 0 auto !important;
   text-align: center !important;
   gap: 8px;
   max-width: 730px;
-  padding: 8px 14px;
+  padding: 8px 16px;
   border-radius: 999px;
   background: rgba(7, 140, 255, 0.08);
-  border: 1px solid rgba(7, 140, 255, 0.28);
+  border: 1px solid rgba(7, 140, 255, 0.32);
   color: #38bdf8;
   font-size: 13px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .filePillRemove {
   background: transparent;
   border: 0;
-  color: #ff77d9;
+  color: #f87171;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 800;
+  font-size: 13px;
   padding: 2px 6px;
+  margin-left: 4px;
 }
 
 /* Recent Header & Cards on Home Page */
@@ -378,26 +381,52 @@ header {
   margin: 0;
 }
 
-/* Compact Empty State Card */
+/* Full-Width Empty State Card matching TAXORA & CLARIA */
 .card.emptyCard {
-  max-width: 380px;
-  margin: 0 auto;
-  padding: 16px 20px;
-  min-height: auto;
-  text-align: center;
-  background: rgba(38, 7, 28, 0.6);
-  border: 1px dashed var(--line);
-  grid-column: 1 / -1;
+  cursor: default;
+  min-height: 0 !important;
+  grid-column: 1 / -1 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+  padding: 18px 24px !important;
+  background: rgba(7, 140, 255, 0.04) !important;
+  border: 1px dashed rgba(7, 140, 255, 0.25) !important;
+  border-radius: 16px;
+  box-sizing: border-box;
+}
+
+.card.emptyCard small {
+  display: block !important;
+  font-size: 11px !important;
+  letter-spacing: 1.5px;
+  color: var(--a1) !important;
+  font-weight: 700;
+  margin: 0 0 6px !important;
+  text-transform: uppercase;
 }
 
 .card.emptyCard b {
-  margin: 4px 0 6px;
-  font-size: 13px;
-  color: #fce7f3;
+  display: block !important;
+  margin: 0 0 4px !important;
+  font-size: 14.5px !important;
+  color: #fff !important;
 }
 
 .card.emptyCard p {
-  font-size: 11px;
+  display: block !important;
+  font-size: 13px !important;
+  color: var(--muted) !important;
+  margin: 0 !important;
+}
+
+.card.emptyCard:hover {
+  transform: none !important;
+  border-color: rgba(7, 140, 255, 0.25) !important;
+  box-shadow: none !important;
 }
 
 /* CHAT PAGE VIEW */
@@ -426,7 +455,7 @@ header {
 /* SIDEBAR: Universal TAXORA Standard */
 .side {
   border-right: 1px solid var(--line);
-  background: rgba(21, 0, 14, 0.95);
+  background: #051a2c;
   backdrop-filter: blur(24px);
   padding: 20px 12px;
   display: flex;
@@ -443,7 +472,7 @@ header {
 .new {
   border: 1px solid rgba(7, 140, 255, 0.35);
   background: rgba(7, 140, 255, 0.1);
-  color: #ff9ee6;
+  color: #38bdf8;
   border-radius: 12px;
   padding: 13px;
   display: flex;
@@ -481,7 +510,7 @@ header {
 }
 
 .histEmpty {
-  color: #8c6a83;
+  color: #849bb4;
   font-size: 13px;
   padding: 12px 8px;
   text-align: center;
@@ -514,7 +543,7 @@ header {
   width: 100%;
   border: 0;
   background: transparent !important;
-  color: #f5cbe7;
+  color: #cbd5e1;
   text-align: left;
   padding: 0 54px 0 12px;
   height: 100%;
@@ -648,7 +677,7 @@ header {
   margin-top: auto;
   border-top: 1px solid var(--line);
   padding: 14px 8px 4px;
-  color: #8c6a83;
+  color: #849bb4;
   font-size: 11px;
   letter-spacing: .5px;
 }
@@ -740,13 +769,96 @@ header {
   max-width: min(88%, 680px);
 }
 
+/* User File Attachment Card (Clickable to view uploaded file) */
+.userFileCard {
+  background: rgba(7, 140, 255, 0.12);
+  border: 1px solid rgba(7, 140, 255, 0.35);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.userFileCard:hover {
+  background: rgba(7, 140, 255, 0.22);
+  border-color: rgba(7, 140, 255, 0.6);
+}
+
+.userFileHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.userFileLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.userFileIcon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.userFileInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.userFileName {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userFileMeta {
+  font-size: 11px;
+  color: #cbd5e1;
+  opacity: 0.85;
+}
+
+.userFileViewBtn {
+  background: rgba(7, 140, 255, 0.25);
+  border: 1px solid rgba(7, 140, 255, 0.45);
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.userFileViewBtn:hover {
+  background: var(--a1);
+  border-color: #ffffff;
+}
+
 .ai {
   align-self: flex-start;
   width: min(94%, 900px);
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 18px 18px 18px 4px;
-  color: #fce7f3;
+  color: #f0f7ff;
 }
 
 .thinking {
@@ -764,7 +876,7 @@ header {
   font-weight: 850;
   letter-spacing: 2px;
   font-size: 11px;
-  background: linear-gradient(90deg, #fff, var(--a1), #ff77d9);
+  background: linear-gradient(90deg, #fff, var(--a1), #38bdf8);
   -webkit-background-clip: text;
   color: transparent;
 }
@@ -805,7 +917,7 @@ header {
   padding: 8px;
   border: 1px solid var(--line);
   border-radius: 20px;
-  background: rgba(38, 7, 28, 0.95);
+  background: #051a2c;
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
   transition: all .2s ease;
 }
@@ -837,7 +949,7 @@ header {
 
 .composer input::placeholder,
 #input::placeholder {
-  color: #9f7b94;
+  color: #849bb4;
 }
 
 #title {
@@ -923,7 +1035,7 @@ header {
 
 /* Readiness Card */
 .readinessCard {
-  background: rgba(10, 0, 7, 0.4);
+  background: rgba(5, 26, 44, 0.5);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 14px 18px;
@@ -958,7 +1070,7 @@ header {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: #ff9ee6;
+  color: #38bdf8;
 }
 
 .scoreNumber {
@@ -989,7 +1101,7 @@ header {
 
 .scoreFill {
   height: 100%;
-  background: linear-gradient(90deg, var(--a1), #ff77d9);
+  background: linear-gradient(90deg, var(--a1), #38bdf8);
   border-radius: 2px;
   transition: width .6s ease;
 }
@@ -998,7 +1110,7 @@ header {
   margin: 0;
   font-size: 12px;
   line-height: 1.5;
-  color: #f3d4ea;
+  color: #cbd5e1;
 }
 
 /* Metrics Row */
@@ -1009,7 +1121,7 @@ header {
 }
 
 .metricItem {
-  background: rgba(10, 0, 7, 0.35);
+  background: rgba(5, 26, 44, 0.5);
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 8px 12px;
@@ -1069,12 +1181,12 @@ header {
 .channelTab.active {
   background: rgba(7, 140, 255, 0.18);
   border-color: rgba(7, 140, 255, 0.4);
-  color: #ff9ee6;
+  color: #38bdf8;
 }
 
 /* Channel Content Box */
 .channelContentBox {
-  background: rgba(10, 0, 7, 0.4);
+  background: rgba(5, 26, 44, 0.5);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 16px;
@@ -1096,7 +1208,7 @@ header {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .5px;
-  color: #ff9ee6;
+  color: #38bdf8;
 }
 
 .copyBtn {
@@ -1193,7 +1305,7 @@ header {
   font-size: 12px;
   line-height: 1.6;
   white-space: pre-wrap;
-  color: #f5cbe7;
+  color: #cbd5e1;
 }
 
 .ctaPill {
@@ -1959,52 +2071,47 @@ header {
   line-height: 1.45;
 }
 
-/* 5. WHATSAPP HEADER & CARD */
-.waChatHeader {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background: #1f2c34;
-  border-radius: 12px 12px 0 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+/* 5. WHATSAPP MOCKUP */
+.whatsappPhoneMockup {
+  max-width: 440px;
+  background: #0d1418;
+  border: 1px solid rgba(37, 211, 102, 0.2);
+  border-radius: 16px;
+  padding: 14px;
+  margin: 0 auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
-.waAvatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: #00a884;
-  display: grid;
-  place-items: center;
-  font-size: 14px;
-}
-
-.waContactInfo {
-  display: flex;
-  flex-direction: column;
-}
-
-.waContactName {
-  font-size: 13.5px;
-  font-weight: 700;
+.whatsappBubble {
+  background: #054640;
+  border-radius: 10px 10px 2px 10px;
+  padding: 12px 16px;
   color: #e9edef;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.waText {
+  margin: 0;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  color: #e9edef;
+}
+
+.waTime {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 4px;
-}
-
-.waVerified {
-  background: #00a884;
-  color: #fff;
-  font-size: 9px;
-  border-radius: 50%;
-  padding: 1px 3px;
-}
-
-.waOfficial {
-  font-size: 10.5px;
+  font-size: 10px;
   color: #8696a0;
+  margin-top: 6px;
+}
+
+.waCheck {
+  color: #53bdeb;
+  font-weight: 700;
 }
 
 /* 6. REALISTIC MOBILE PUSH NOTIFICATION */
@@ -2155,7 +2262,7 @@ header {
   margin: 0 0 14px;
   font-size: 11px;
   line-height: 1.5;
-  color: #e5b3d6;
+  color: #849bb4;
 }
 
 .inAppBtn {
@@ -2173,20 +2280,20 @@ header {
 .codeBox {
   margin: 0;
   padding: 14px;
-  background: #090006;
+  background: #03101c;
   border: 1px solid var(--line);
   border-radius: 10px;
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1.5;
-  color: #ff9ee6;
+  color: #38bdf8;
   overflow-x: auto;
   max-height: 380px;
 }
 
 /* Strategic Recommendations */
 .recommendationsSection {
-  background: rgba(10, 0, 7, 0.3);
+  background: rgba(5, 26, 44, 0.5);
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 12px 16px;
@@ -2212,7 +2319,7 @@ header {
   gap: 8px;
   font-size: 11px;
   line-height: 1.5;
-  color: #f5cbe7;
+  color: #cbd5e1;
 }
 
 .recNumber {
@@ -2232,7 +2339,7 @@ header {
 /* DOCUMENT VIEWER SIDE PANEL */
 .docViewer {
   border-left: 1px solid var(--line);
-  background: rgba(21, 0, 14, 0.98);
+  background: rgba(5, 26, 44, 0.98);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -2277,7 +2384,7 @@ header {
   border-radius: 8px;
   border: 1px solid var(--line);
   background: rgba(7, 140, 255, 0.08);
-  color: #f5cbe7;
+  color: #cbd5e1;
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -2323,7 +2430,7 @@ header {
   height: 100%;
   border: 0;
   border-radius: 8px;
-  background: #11000b;
+  background: #03101c;
 }
 
 .docViewerText {
@@ -2331,7 +2438,7 @@ header {
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1.5;
-  color: #f5cbe7;
+  color: #cbd5e1;
   white-space: pre-wrap;
 }
 
@@ -2505,7 +2612,7 @@ header {
 }
 .histIcon.edit,
 .histActionBtn:not(.danger) {
-  color: #ff8ce3 !important;
+  color: #38bdf8 !important;
   background: rgba(7, 140, 255, 0.22) !important;
   border: 1px solid rgba(7, 140, 255, 0.48) !important;
 }
@@ -2513,7 +2620,7 @@ header {
 .histActionBtn:not(.danger):hover {
   color: #ffffff !important;
   background: rgba(7, 140, 255, 0.42) !important;
-  border-color: #ff44c8 !important;
+  border-color: #078cff !important;
   transform: scale(1.04);
 }
 .histIcon.del,

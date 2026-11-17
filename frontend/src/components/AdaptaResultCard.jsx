@@ -192,31 +192,6 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails, onO
         )}
       </div>
 
-      {/* Attached Document Pill */}
-      {doc && (
-        <div className="docAttachedPill">
-          <div className="docAttachedInfo">
-            <svg className="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-            </svg>
-            <span className="docAttachedName">{toText(doc.filename, 'Attached Document')}</span>
-            <span className="docAttachedMeta">
-              {doc.size ? `${(doc.size / 1024).toFixed(1)} KB` : ''}
-              {doc.words ? ` · ${doc.words} words` : ''}
-            </span>
-          </div>
-          {onOpenDoc && (
-            <button
-              className="docAttachedBtn"
-              type="button"
-              onClick={() => onOpenDoc(doc)}
-            >
-              View Document ↗
-            </button>
-          )}
-        </div>
-      )}
 
       {/* Top Readiness Score Card */}
       <div className="readinessCard">
@@ -679,16 +654,6 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails, onO
             </div>
 
             <div className="whatsappPhoneMockup">
-              <div className="waChatHeader">
-                <div className="waAvatar">🏢</div>
-                <div className="waContactInfo">
-                  <div className="waContactName">
-                    Enterprise Updates <span className="waVerified">✓</span>
-                  </div>
-                  <span className="waOfficial">Official Business Account</span>
-                </div>
-              </div>
-
               <div className="whatsappBubble">
                 <pre className="waText">{waText || 'No WhatsApp text generated.'}</pre>
                 <div className="waTime">
