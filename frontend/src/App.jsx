@@ -168,7 +168,7 @@ export default function App() {
           }
         }
         return { ...s, title: t, hasTopicTitle: hasTopic }
-      })
+      }).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
     } catch {
       return []
     }
@@ -217,6 +217,14 @@ export default function App() {
       scrollToBottom()
     }
   }, [messages, loading, view])
+
+  function goHome() {
+    setCurrentSessionId(null)
+    setMessages([])
+    clearSelectedFile()
+    setActiveViewerDoc(null)
+    setView('home')
+  }
 
   function handleNewChat() {
     setCurrentSessionId(null)
@@ -301,7 +309,14 @@ export default function App() {
     const cleanText = (textToSend || '').trim()
     if (!cleanText && !fileToSend) return
 
-    const currentList = baseMessages !== null ? baseMessages : messages
+    const isHomeStart = view === 'home' || !targetSessionId
+    const activeId = (!isHomeStart && targetSessionId) ? targetSessionId : ('adapta_' + Date.now())
+    if (isHomeStart) {
+      setCurrentSessionId(activeId)
+      setView('chat')
+    }
+
+    const currentList = baseMessages !== null ? baseMessages : (!isHomeStart ? messages : [])
     const localUrl = fileToSend ? URL.createObjectURL(fileToSend) : null
     let previewText = ''
     if (fileToSend) {
@@ -389,22 +404,10 @@ export default function App() {
 
         setTitle(newTitle)
 
-        if (existing) {
-          return prev.map(s => s.id === activeId ? {
-            ...s,
-            title: newTitle,
-            messages: finalMessages,
-            updatedAt: Date.now()
-          } : s)
-        } else {
-          return [{
-            id: activeId,
-            title: newTitle,
-            messages: finalMessages,
-            createdAt: Date.now(),
-            updatedAt: Date.now()
-          }, ...prev]
-        }
+        const updated = existing
+          ? { ...existing, title: newTitle, messages: finalMessages, updatedAt: Date.now() }
+          : { id: activeId, title: newTitle, messages: finalMessages, createdAt: Date.now(), updatedAt: Date.now() }
+        return [updated, ...prev.filter(s => s.id !== activeId)]
       })
     } catch (err) {
       const errorMsg = {
@@ -447,7 +450,7 @@ export default function App() {
       {view === 'home' && (
         <section id="home">
           <header>
-            <div className="word">ADAPTA</div>
+            <div className="word" onClick={goHome} style={{ cursor: 'pointer' }}>ADAPTA</div>
             <button
               className="enter"
               id="enter"
@@ -615,7 +618,7 @@ export default function App() {
                     className="ghost"
                     id="back"
                     type="button"
-                    onClick={() => setView('home')}
+                    onClick={goHome}
                   >
                     <svg className="icon" viewBox="0 0 24 24" width="16" height="16">
                       <path d="m3 10 9-7 9 7" />
