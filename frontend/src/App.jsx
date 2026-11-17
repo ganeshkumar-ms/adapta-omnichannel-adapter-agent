@@ -694,6 +694,23 @@ export default function App() {
 
               {/* Composer */}
               <div className="composerArea">
+                {selectedFile && (
+                  <div style={{ display: 'flex', justifyContent: 'center', width: '100%', margin: '0 auto 10px' }}>
+                    <div className="attachedRow composerAttached">
+                      <span className="attachChip">
+                        <span className="attachName">{selectedFile.name}</span>
+                        <button
+                          type="button"
+                          className="attachRemove"
+                          aria-label={`Remove ${selectedFile.name}`}
+                          onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <div className="composer">
                   <form id="form" onSubmit={handleChatSubmit}>
                     <input
@@ -734,18 +751,6 @@ export default function App() {
                     </button>
                   </form>
                 </div>
-                {selectedFile && (
-                  <div className="filePill" style={{ maxWidth: '820px', margin: '8px auto 0', display: 'flex', justifyContent: 'center' }}>
-                    <span>Attached · {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
-                    <button
-                      className="filePillRemove"
-                      type="button"
-                      onClick={() => setSelectedFile(null)}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
                 <div className="fine">
                   ENTERPRISE OMNICHANNEL ADAPTATION ENGINE · SECURE & SANITIZED
                 </div>
