@@ -197,20 +197,26 @@ export default function App() {
     setTimeout(() => {
       const container = document.querySelector('.messages')
       if (!container) return
+      if (loading) {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
+        return
+      }
       const aiCards = container.querySelectorAll('.bubble.ai')
       if (aiCards.length > 0) {
-        aiCards[aiCards.length - 1].scrollIntoView({ behavior: 'smooth', block: 'start' })
+        const lastAi = aiCards[aiCards.length - 1]
+        const targetTop = Math.max(0, lastAi.offsetTop - 16)
+        container.scrollTo({ top: targetTop, behavior: 'smooth' })
       } else {
-        container.scrollTop = container.scrollHeight
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
       }
-    }, 100)
+    }, 80)
   }
 
   useEffect(() => {
     if (view === 'chat') {
       scrollToBottom()
     }
-  }, [messages, view])
+  }, [messages, loading, view])
 
   function handleNewChat() {
     setCurrentSessionId(null)
@@ -501,13 +507,13 @@ export default function App() {
             {selectedFile && (
               <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '14px' }}>
                 <div className="filePill">
-                  <span>📎 Attached · {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                  <span>Attached · {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
                   <button
                     className="filePillRemove"
                     type="button"
                     onClick={() => setSelectedFile(null)}
                   >
-                    ✕
+                    ×
                   </button>
                 </div>
               </div>
@@ -644,7 +650,6 @@ export default function App() {
                           >
                             <div className="userFileHeader">
                               <div className="userFileLeft">
-                                <span className="userFileIcon" aria-hidden="true">📄</span>
                                 <div className="userFileInfo">
                                   <span className="userFileName" title={msg.file.name}>{msg.file.name}</span>
                                   <span className="userFileMeta">
@@ -653,7 +658,7 @@ export default function App() {
                                   </span>
                                 </div>
                               </div>
-                              <span className="userFileViewBtn">Open ↗</span>
+                              <span className="userFileViewBtn">Open</span>
                             </div>
                           </button>
                         )}
