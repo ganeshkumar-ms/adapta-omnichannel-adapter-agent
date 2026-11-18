@@ -112,7 +112,11 @@ function applyBrandVoiceToChannels(voice, base) {
       pushTitle: `For You: ${base.pushTitle.replace(/^Update:\s*/i, '')}`,
       pushBody: base.pushBody,
       inAppHead: `Here to Help: ${base.inAppHead}`,
-      inAppBody: base.inAppBody
+      inAppBody: base.inAppBody,
+      printSalutation: 'Dear Valued Customer,',
+      printLead: 'We appreciate your relationship with us and want to share this update clearly and supportively.',
+      printClosing: 'Warmest regards,\nCustomer Experience & Support Team',
+      voiceSummary: 'Customer-First Empathetic tone applied across all channels while preserving source facts and disclosures.'
     }
   }
 
@@ -131,7 +135,11 @@ function applyBrandVoiceToChannels(voice, base) {
       pushTitle: `URGENT: ${base.pushTitle.replace(/^Update:\s*/i, '')}`,
       pushBody: `Action Required: ${base.pushBody}`,
       inAppHead: `Mandatory Action Required: ${base.inAppHead}`,
-      inAppBody: base.inAppBody
+      inAppBody: base.inAppBody,
+      printSalutation: 'URGENT REGULATORY & COMPLIANCE NOTICE',
+      printLead: 'Immediate review and adherence are required under enterprise governance and applicable regulatory obligations.',
+      printClosing: 'Enterprise Risk, Legal & Compliance Office',
+      voiceSummary: 'Urgent Compliance Alert tone applied across all channels with mandatory action framing and full legal disclosures.'
     }
   }
 
@@ -150,7 +158,11 @@ function applyBrandVoiceToChannels(voice, base) {
       pushTitle: `Insight: ${base.pushTitle.replace(/^Update:\s*/i, '')}`,
       pushBody: base.pushBody,
       inAppHead: `Strategic Release: ${base.inAppHead}`,
-      inAppBody: base.inAppBody
+      inAppBody: base.inAppBody,
+      printSalutation: 'Dear Executive Partner,',
+      printLead: 'Strategic briefing outlining key operational developments, milestones, and governance commitments.',
+      printClosing: 'Best regards,\nEnterprise Strategy & Leadership Council',
+      voiceSummary: 'B2B Thought Leadership tone applied across all channels with strategic executive framing.'
     }
   }
 
@@ -169,7 +181,11 @@ function applyBrandVoiceToChannels(voice, base) {
     pushTitle: base.pushTitle,
     pushBody: base.pushBody,
     inAppHead: base.inAppHead,
-    inAppBody: base.inAppBody
+    inAppBody: base.inAppBody,
+    printSalutation: 'Dear Valued Stakeholder,',
+    printLead: 'Please find below the official enterprise communication and verified operational details.',
+    printClosing: 'Sincerely,\nEnterprise Operations & Communications',
+    voiceSummary: 'Corporate Executive tone applied across all channels with formal institutional clarity.'
   }
 }
 
@@ -534,7 +550,7 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
           />
         </div>
 
-        <p className="readinessSummary">{summary}</p>
+        <p className="readinessSummary">{voiced.voiceSummary || summary}</p>
       </div>
 
       {/* 2. BRAND VOICE GOVERNANCE BAR (DYNAMICALLY CHANGES CHANNEL TONE) */}
@@ -553,7 +569,13 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
                 key={vp}
                 type="button"
                 className={`adpVoiceBtn${selectedVoice === vp ? ' active' : ''}`}
-                onClick={() => setSelectedVoice(vp)}
+                onClick={() => {
+                  setSelectedVoice(vp)
+                  setChannelApprovals({})
+                  if (campaignState === 'APPROVED' || campaignState === 'QUEUED_FOR_PROVIDER' || campaignState === 'SCHEDULED') {
+                    setCampaignState('AWAITING_APPROVAL')
+                  }
+                }}
               >
                 {vp}
               </button>
@@ -1087,10 +1109,10 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
         {activeTab === 'print_stream' && (() => {
           const pl = channels.print_letter || channels.print_stream || {}
           const letterHeadline = pl.headline || baseHeadline
-          const letterSal = pl.salutation || 'Dear Valued Customer,'
-          const letterBody = pl.body || rawEmailBody || summary
+          const letterSal = voiced.printSalutation || pl.salutation || 'Dear Valued Customer,'
+          const letterBody = `${voiced.printLead ? voiced.printLead + '\n\n' : ''}${voiced.emailBody || pl.body || rawEmailBody || summary}`
           const letterLegal = pl.legal_disclosures || 'Legal & Regulatory Disclosures: All terms, conditions, deadlines, and financial figures stated in this communication remain binding per your governing agreement.'
-          const letterClosing = pl.closing || 'Yours sincerely,\nCustomer Communications Team'
+          const letterClosing = voiced.printClosing || pl.closing || 'Yours sincerely,\nCustomer Communications Team'
           const fullLetterText = `${letterHeadline}\n\n${letterSal}\n\n${letterBody}\n\nLEGAL & REGULATORY DISCLOSURES\n${letterLegal}\n\n${letterClosing}`
           return (
             <div className="channelVariant printLetterVariant">
