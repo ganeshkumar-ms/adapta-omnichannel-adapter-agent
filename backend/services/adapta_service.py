@@ -473,6 +473,14 @@ def _enrich_enterprise_adapta_payload(
     email_subj = (email_ref.get('subject_lines') or [first_line])[0] if isinstance(email_ref.get('subject_lines'), list) else (email_ref.get('subject') or first_line)
     email_body = email_ref.get('body') or clean[:1200]
 
+    # Ensure WhatsApp is always synthesized when recommended
+    if 'whatsapp' in rec_channels and 'whatsapp' not in all_channels:
+        all_channels['whatsapp'] = {
+            'message': f"*{email_subj}*\n\n{email_body[:420]}\n\nReply for assistance or review details in your portal.",
+            'cta': 'Open Portal',
+            'compliance': 'Explicit customer opt-in consent required',
+        }
+
     # Ensure Print Letter (with Legal) is always synthesized when recommended
     if 'print_letter' in rec_channels and 'print_letter' not in all_channels:
         legal_lines = [

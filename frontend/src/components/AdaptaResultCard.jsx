@@ -590,7 +590,13 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
 
       {/* 3. RECOMMENDED CHANNEL TABS + JSON PAYLOAD STREAM */}
       <div className="channelTabs">
-        {CHANNEL_TABS.filter(tab => tab.key === 'payload' || Boolean(channels[tab.key])).map(tab => (
+        {CHANNEL_TABS.filter(tab => {
+          if (tab.key === 'payload') return true
+          if (tab.key === 'whatsapp' || tab.key === 'print_letter') {
+            return data.communication_intelligence?.mode !== 'internal'
+          }
+          return Boolean(channels[tab.key])
+        }).map(tab => (
           <button
             key={tab.key}
             type="button"
