@@ -324,13 +324,14 @@ def _determine_communication_strategy(
         audience_desc = 'Individual customer / borrower (personalised direct communication)'
         rec_map = {
             'email': ('Outlook Email', 'Recommended', 'Primary communication — detailed explanation and required customer action'),
+            'whatsapp': ('WhatsApp Business', 'Recommended', 'Direct customer messaging (subject to verified WhatsApp consent)'),
             'in_app': ('Secure Customer Portal', 'Recommended', 'Direct authenticated portal notification for confidential action'),
             'sms': ('SMS', 'Recommended', 'Short reminder directing the customer to the secure portal (if authorised)'),
+            'print_letter': ('Print Letter (with Legal)', 'Recommended', 'Formal print letter with full legal & regulatory disclosures'),
         }
         exc_map = {
             'linkedin': ('LinkedIn', 'Excluded', 'Not appropriate for an individual confidential customer request'),
             'twitter': ('X (Twitter)', 'Excluded', 'Not appropriate for individual lending or account communication'),
-            'whatsapp': ('WhatsApp Business', 'Excluded', 'Excluded unless explicit customer WhatsApp consent is verified'),
             'push': ('Mobile Push', 'Excluded', 'Excluded for confidential account-specific requests'),
         }
     elif mode == 'segment':
@@ -338,9 +339,10 @@ def _determine_communication_strategy(
         audience_desc = 'Selected customer segment (targeted cohort communication)'
         rec_map = {
             'email': ('Targeted Email', 'Recommended', 'Detailed segment communication with deadlines and instructions'),
+            'whatsapp': ('WhatsApp Business', 'Recommended', 'Approved where customer consent and policy permit'),
             'sms': ('SMS', 'Recommended', 'Concise deadline reminder for opted-in segment recipients'),
             'in_app': ('Customer Portal / In-App', 'Recommended', 'Authenticated portal banner for the targeted customer group'),
-            'whatsapp': ('WhatsApp Business', 'Recommended', 'Approved where customer consent and policy permit'),
+            'print_letter': ('Print Letter (with Legal)', 'Recommended', 'Formal print notice with mandatory legal disclosures'),
         }
         exc_map = {
             'linkedin': ('LinkedIn', 'Excluded', 'Public social channels are unsuitable for targeted segment notices'),
@@ -360,20 +362,22 @@ def _determine_communication_strategy(
             'twitter': ('X (Twitter)', 'Excluded', 'External public channel excluded for internal communications'),
             'whatsapp': ('WhatsApp Business', 'Excluded', 'External customer channel excluded for internal memos'),
             'sms': ('SMS', 'Excluded', 'Reserved for customer/urgent operational alerts'),
+            'print_letter': ('Print Letter (with Legal)', 'Excluded', 'External customer print notice not required for internal memo'),
         }
     else:
         mode_label = 'Organisation-Wide Announcement'
         audience_desc = 'Organisation-wide / public audience (broad multi-channel distribution)'
         rec_map = {
             'email': ('Outlook Email', 'Recommended', 'Detailed announcement for customers and stakeholders'),
+            'whatsapp': ('WhatsApp Business', 'Recommended', 'Direct customer notification (subject to opt-in consent)'),
             'linkedin': ('LinkedIn', 'Recommended', 'Professional public announcement'),
-            'twitter': ('X (Twitter)', 'Recommended', 'Short public announcement with approved link'),
+            'twitter': ('X (Twitter)', 'Recommended', 'Single concise public X post with approved link (no thread)'),
             'push': ('Mobile Push', 'Recommended', 'Short customer notification'),
             'in_app': ('In-App / Web Announcement', 'Recommended', 'Portal / app banner announcement'),
+            'print_letter': ('Print Letter (with Legal)', 'Recommended', 'Formal print letter with full legal & regulatory disclosures'),
         }
         exc_map = {
             'sms': ('SMS', 'Optional / Excluded', 'Reserved for urgent or opted-in transactional alerts unless requested'),
-            'whatsapp': ('WhatsApp Business', 'Optional / Excluded', 'Requires explicit marketing opt-in consent'),
         }
 
     pref_set = {str(c).lower() for c in (preferred_channels or [])}
@@ -465,17 +469,45 @@ def _enrich_enterprise_adapta_payload(
     parsed['communication_intelligence'] = strategy
 
     all_channels = parsed.get('channels') if isinstance(parsed.get('channels'), dict) else {}
+    email_ref = all_channels.get('email') if isinstance(all_channels.get('email'), dict) else {}
+    email_subj = (email_ref.get('subject_lines') or [first_line])[0] if isinstance(email_ref.get('subject_lines'), list) else (email_ref.get('subject') or first_line)
+    email_body = email_ref.get('body') or clean[:1200]
+
+    # Ensure Print Letter (with Legal) is always synthesized when recommended
+    if 'print_letter' in rec_channels and 'print_letter' not in all_channels:
+        legal_lines = [
+            ln.strip() for ln in (source_text or '').splitlines()
+            if any(k in ln.lower() for k in ('disclosure', 'terms', 'regulatory', 'subject to', 'ombudsman', 'privacy', 'grievance', 'liability', 'rights'))
+        ]
+        legal_block = '\n'.join(legal_lines[:5]) if legal_lines else (
+            'Legal & Regulatory Notice: All terms, conditions, deadlines, and financial figures stated above remain binding per your governing agreement. '
+            'This communication does not waive any contractual or statutory rights.'
+        )
+        all_channels['print_letter'] = {
+            'headline': email_subj,
+            'salutation': 'Dear Valued Customer,',
+            'body': email_body,
+            'legal_disclosures': legal_block,
+            'closing': 'Yours sincerely,\nCustomer Communications Team',
+            'compliance': 'Formal print format with full legal & regulatory disclosures',
+        }
+
     filtered_channels = {}
     for ch_key in rec_channels:
         if ch_key in all_channels and isinstance(all_channels[ch_key], dict):
             ch_obj = dict(all_channels[ch_key])
             ch_obj['est_engagement'] = 'Analytics not connected (no fabricated benchmark)'
+            if ch_key == 'twitter':
+                ch_obj.pop('thread_points', None)
+                ch_obj.pop('thread', None)
             if ch_key == 'sms':
                 ch_obj['compliance'] = 'Opt-out required for bulk/promotional SMS; transactional notices exempt per policy'
             elif ch_key == 'email':
                 ch_obj['compliance'] = 'Unsubscribe required for marketing; transactional/lending notices exempt'
             elif ch_key == 'whatsapp':
                 ch_obj['compliance'] = 'Explicit customer opt-in consent required'
+            elif ch_key == 'print_letter':
+                ch_obj['compliance'] = 'Full legal & regulatory disclosures included for print/PDF distribution'
             else:
                 ch_obj['compliance'] = 'Policy-aligned channel format'
             filtered_channels[ch_key] = ch_obj

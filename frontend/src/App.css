@@ -4661,6 +4661,52 @@ html, body {
   font-size: 13px;
 }
 
+.adpPrintSheet {
+  padding: 20px 22px;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: 'Aptos', 'Calibri', sans-serif;
+  border: 1px solid #cbd5e1;
+}
+
+.adpPrintHeadline {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0b3c78;
+}
+
+.adpPrintPara {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #1e293b;
+}
+
+.adpPrintLegalBox {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #eff6ff;
+  border-left: 3px solid #0284c7;
+  font-size: 11.5px;
+  color: #1e293b;
+}
+
+.adpPrintLegalBox strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #0369a1;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.adpPrintLegalBox p {
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* === STATIC TRANSPARENT CHAT HEADER (TITLE + HOME) === */
 .chat {
   overflow: hidden !important;
