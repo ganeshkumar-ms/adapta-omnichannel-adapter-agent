@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 
 function toText(val, fallback = '') {
   if (typeof val === 'string') return val
@@ -304,6 +304,24 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
   const [showCompare, setShowCompare] = useState(false)
   const [approverName, setApproverName] = useState('Campaign Approver')
   const [auditEvents, setAuditEvents] = useState([])
+  const leftCompareRef = useRef(null)
+  const rightCompareRef = useRef(null)
+  const syncingScrollRef = useRef(null)
+
+  const handleSyncCompareScroll = (sourceSide) => {
+    if (syncingScrollRef.current && syncingScrollRef.current !== sourceSide) return
+    const srcEl = sourceSide === 'left' ? leftCompareRef.current : rightCompareRef.current
+    const dstEl = sourceSide === 'left' ? rightCompareRef.current : leftCompareRef.current
+    if (!srcEl || !dstEl) return
+    const srcMax = srcEl.scrollHeight - srcEl.clientHeight
+    const dstMax = dstEl.scrollHeight - dstEl.clientHeight
+    if (srcMax <= 0 || dstMax <= 0) return
+    syncingScrollRef.current = sourceSide
+    dstEl.scrollTop = (srcEl.scrollTop / srcMax) * dstMax
+    requestAnimationFrame(() => {
+      syncingScrollRef.current = null
+    })
+  }
 
   const guardrails = propGuardrails || data?.guardrails || {}
   const traceId = data?.trace_id || guardrails?.trace_id || ''
@@ -1495,11 +1513,21 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
 
             {showCompare && (
               <div className="adpCompareBox">
-                <div className="adpComparePane">
+                <div
+                  ref={leftCompareRef}
+                  className="adpComparePane"
+                  style={{ maxHeight: '280px', overflowY: 'auto' }}
+                  onScroll={() => handleSyncCompareScroll('left')}
+                >
                   <strong>Original Source Summary</strong>
                   <p>{summary}</p>
                 </div>
-                <div className="adpComparePane">
+                <div
+                  ref={rightCompareRef}
+                  className="adpComparePane"
+                  style={{ maxHeight: '280px', overflowY: 'auto' }}
+                  onScroll={() => handleSyncCompareScroll('right')}
+                >
                   <strong>Adapted ({activeTab.toUpperCase()} · {selectedVoice})</strong>
                   <p style={{ whiteSpace: 'pre-wrap' }}>
                     {activeTab === 'sms' ? voiced.smsText
