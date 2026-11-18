@@ -4653,6 +4653,42 @@ html, body {
   color: #7dd3fc;
 }
 
+.adpExportLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7dd3fc;
+  margin-right: 4px;
+}
+
+.adpCompareBox {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.adpComparePane {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(3, 14, 28, 0.82);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  font-size: 12px;
+  color: #e2e8f0;
+}
+
+.adpComparePane strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #7dd3fc;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.adpComparePane p {
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* === STATIC TRANSPARENT CHAT HEADER (TITLE + HOME) === */
 .chat {
   overflow: hidden !important;

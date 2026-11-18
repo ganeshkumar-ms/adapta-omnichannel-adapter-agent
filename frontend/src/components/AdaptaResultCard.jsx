@@ -300,7 +300,8 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
   const [copiedKey, setCopiedKey] = useState('')
   const [campaignState, setCampaignState] = useState('AWAITING_APPROVAL')
   const [channelApprovals, setChannelApprovals] = useState({})
-  const [scheduleAt, setScheduleAt] = useState('')
+  const [versionNum, setVersionNum] = useState(1)
+  const [showCompare, setShowCompare] = useState(false)
   const [approverName, setApproverName] = useState('Campaign Approver')
   const [auditEvents, setAuditEvents] = useState([])
 
@@ -572,7 +573,8 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
                 onClick={() => {
                   setSelectedVoice(vp)
                   setChannelApprovals({})
-                  if (campaignState === 'APPROVED' || campaignState === 'QUEUED_FOR_PROVIDER' || campaignState === 'SCHEDULED') {
+                  setVersionNum(v => v + 1)
+                  if (campaignState === 'APPROVED') {
                     setCampaignState('AWAITING_APPROVAL')
                   }
                 }}
@@ -612,8 +614,10 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
             <strong className="adpMetaVal highlight">{activeChannelMeta.cta}</strong>
           </div>
           <div className="adpAudienceCell">
-            <span className="adpMetaKey">PROJECTED ENGAGEMENT</span>
-            <strong className="adpMetaVal">{activeChannelMeta.engagement}</strong>
+            <span className="adpMetaKey">CHANNEL GOVERNANCE</span>
+            <strong className="adpMetaVal">
+              {channelApprovals[activeTab] === 'APPROVED' ? 'APPROVED' : 'AWAITING APPROVAL'}
+            </strong>
           </div>
         </div>
       </div>
@@ -816,9 +820,7 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
               </div>
 
               <div className="xTimestampRow">
-                <span>10:42 AM · Enterprise Verified</span>
-                <span>·</span>
-                <span className="xViews">58.4K Views</span>
+                <span>Enterprise Verified Format</span>
               </div>
 
               {twThreads.length > 0 && (
@@ -1351,22 +1353,54 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
         </div>
       </div>
 
-      {/* 7. HUMAN APPROVAL, PUBLISHING & DELIVERY MANAGEMENT */}
+      {/* 7. APPROVAL, VERSION MANAGEMENT, COMPARISON & EXPORT CENTRE */}
       {(() => {
         const approvableKeys = ['email', 'sms', 'whatsapp', 'linkedin', 'twitter', 'push', 'in_app', 'print_stream']
         const approvedList = approvableKeys.filter(k => channelApprovals[k] === 'APPROVED')
         const logEvent = (action, scope) => {
           setAuditEvents(prev => [
-            { ts: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC', actor: approverName || 'Campaign Approver', action, scope },
+            { ts: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC', actor: approverName || 'Campaign Approver', version: `v${versionNum}`, action, scope },
             ...prev
           ].slice(0, 6))
+        }
+        const pkgObject = {
+          package_name: payload.campaign_name || baseHeadline || 'Approved_Communication_Package',
+          version: `v${versionNum}`,
+          lifecycle_state: campaignState,
+          brand_voice: selectedVoice,
+          approved_channels: approvedList,
+          channels: {
+            email: { subject: emailSubjects[activeSubjectIdx] || baseHeadline, body: `${voiced.emailGreeting}\n\n${voiced.emailLead}\n\n${voiced.emailBody}\n\n${voiced.emailSignoff}` },
+            sms: { text: voiced.smsText },
+            whatsapp: { header: voiced.waHeader, body: voiced.waBody, footer: voiced.waFooter },
+            linkedin: { post: voiced.liPost },
+            twitter: { post: voiced.twTweet },
+            push: { title: voiced.pushTitle, body: voiced.pushBody },
+            in_app: { headline: voiced.inAppHead, body: voiced.inAppBody },
+            print_stream: { headline: baseHeadline, salutation: voiced.printSalutation, body: `${voiced.printLead}\n\n${voiced.emailBody}`, closing: voiced.printClosing },
+          },
+          fact_checker: verifiedFacts,
+          compliance: complianceChecks,
+          multilingual_variants: multilingualMap,
+          audit_trail: auditEvents,
+        }
+        const downloadPkg = (content, ext, mime) => {
+          const blob = new Blob([content], { type: mime })
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `${(baseHeadline || 'ADAPTA_Package').replace(/[^a-z0-9_-]+/gi, '_')}_v${versionNum}.${ext}`
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
         }
         return (
           <div className="adpEnterprisePanel">
             <div className="adpPanelHead">
-              <span className="adpPanelTitle">5. HUMAN APPROVAL, PUBLISHING &amp; DELIVERY MANAGEMENT</span>
-              <span className={`adpPanelBadge ${campaignState === 'APPROVED' || campaignState === 'SENT' ? 'green' : ''}`}>
-                {campaignState}
+              <span className="adpPanelTitle">5. APPROVAL, VERSION MANAGEMENT &amp; EXPORT CENTRE</span>
+              <span className={`adpPanelBadge ${campaignState === 'APPROVED' ? 'green' : ''}`}>
+                {campaignState} · v{versionNum}
               </span>
             </div>
 
@@ -1434,65 +1468,80 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
               <button
                 type="button"
                 className="adpGovBtn"
-                onClick={() => { setCampaignState('REVIEW_REQUIRED'); logEvent('Requested Revision', 'All') }}
+                onClick={() => { setCampaignState('REVIEW_REQUIRED'); setVersionNum(v => v + 1); setChannelApprovals({}); logEvent('Requested Revision', 'All') }}
               >
                 Request Revision
               </button>
               <button
                 type="button"
                 className="adpGovBtn danger"
-                onClick={() => { setCampaignState('REJECTED'); setChannelApprovals({}); logEvent('Rejected Campaign', 'All') }}
+                onClick={() => { setCampaignState('REJECTED'); setChannelApprovals({}); logEvent('Rejected Package', 'All') }}
               >
                 Reject
               </button>
-            </div>
-
-            <div className="adpPublishRow">
-              <button
-                type="button"
-                className="adpGovBtn primary"
-                disabled={approvedList.length === 0 || campaignState === 'REJECTED'}
-                onClick={() => {
-                  setCampaignState('QUEUED_FOR_PROVIDER')
-                  logEvent('Queued Approved Channels (Awaiting Provider Confirmation)', approvedList.join(', '))
-                }}
-              >
-                Send Now ({approvedList.length} Approved)
-              </button>
-              <input
-                type="datetime-local"
-                className="adpApproverInput"
-                value={scheduleAt}
-                onChange={e => setScheduleAt(e.target.value)}
-                aria-label="Schedule time"
-              />
               <button
                 type="button"
                 className="adpGovBtn"
-                disabled={approvedList.length === 0 || !scheduleAt}
+                onClick={() => setShowCompare(v => !v)}
+              >
+                {showCompare ? 'Hide Comparison' : 'Compare Original vs. Adapted'}
+              </button>
+            </div>
+
+            {showCompare && (
+              <div className="adpCompareBox">
+                <div className="adpComparePane">
+                  <strong>Original Source Summary</strong>
+                  <p>{summary}</p>
+                </div>
+                <div className="adpComparePane">
+                  <strong>Adapted ({activeTab.toUpperCase()} · {selectedVoice})</strong>
+                  <p style={{ whiteSpace: 'pre-wrap' }}>
+                    {activeTab === 'sms' ? voiced.smsText
+                      : activeTab === 'whatsapp' ? `${voiced.waHeader}\n${voiced.waBody}`
+                      : activeTab === 'linkedin' ? voiced.liPost
+                      : activeTab === 'twitter' ? voiced.twTweet
+                      : activeTab === 'push' ? `${voiced.pushTitle}\n${voiced.pushBody}`
+                      : activeTab === 'in_app' ? `${voiced.inAppHead}\n${voiced.inAppBody}`
+                      : `${voiced.emailGreeting}\n${voiced.emailLead}\n${voiced.emailBody}`}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="adpPublishRow">
+              <span className="adpExportLabel">Export Approved Communication Package:</span>
+              <button
+                type="button"
+                className="adpGovBtn primary"
+                onClick={() => downloadPkg(JSON.stringify(pkgObject, null, 2), 'json', 'application/json;charset=utf-8')}
+              >
+                Export JSON
+              </button>
+              <button
+                type="button"
+                className="adpGovBtn"
                 onClick={() => {
-                  setCampaignState('SCHEDULED')
-                  logEvent(`Scheduled for ${scheduleAt}`, approvedList.join(', '))
+                  const txt = `APPROVED COMMUNICATION PACKAGE (${pkgObject.version})\nStatus: ${campaignState} | Brand Voice: ${selectedVoice}\n\n--- OUTLOOK EMAIL ---\nSubject: ${pkgObject.channels.email.subject}\n${pkgObject.channels.email.body}\n\n--- WHATSAPP ---\n${pkgObject.channels.whatsapp.header}\n${pkgObject.channels.whatsapp.body}\n\n--- SMS ---\n${pkgObject.channels.sms.text}\n\n--- LINKEDIN ---\n${pkgObject.channels.linkedin.post}\n\n--- X POST ---\n${pkgObject.channels.twitter.post}\n\n--- PRINT LETTER (LEGAL) ---\n${pkgObject.channels.print_stream.headline}\n${pkgObject.channels.print_stream.salutation}\n${pkgObject.channels.print_stream.body}\n${pkgObject.channels.print_stream.closing}\n`
+                  downloadPkg(txt, 'txt', 'text/plain;charset=utf-8')
                 }}
               >
-                Schedule for Later
+                Export TXT
               </button>
-              {campaignState === 'SCHEDULED' && (
-                <button
-                  type="button"
-                  className="adpGovBtn danger"
-                  onClick={() => {
-                    setCampaignState('CANCELLED')
-                    logEvent('Cancelled Scheduled Campaign', approvedList.join(', '))
-                  }}
-                >
-                  Cancel Scheduled
-                </button>
-              )}
+              <button
+                type="button"
+                className="adpGovBtn"
+                onClick={() => {
+                  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${baseHeadline}</title><style>body{font-family:Aptos,Calibri,Arial,sans-serif;max-width:820px;margin:40px auto;color:#0f172a;line-height:1.6}section{margin-bottom:24px;padding:16px;border:1px solid #cbd5e1;border-radius:8px}h2{margin-top:0;color:#0b3c78;font-size:16px}</style></head><body><h1>${baseHeadline} (${pkgObject.version})</h1><p><strong>Status:</strong> ${campaignState} | <strong>Brand Voice:</strong> ${selectedVoice}</p><section><h2>Outlook Email</h2><p><strong>Subject:</strong> ${pkgObject.channels.email.subject}</p><pre style="white-space:pre-wrap;font-family:inherit">${pkgObject.channels.email.body}</pre></section><section><h2>WhatsApp</h2><pre style="white-space:pre-wrap;font-family:inherit">${pkgObject.channels.whatsapp.header}\n${pkgObject.channels.whatsapp.body}</pre></section><section><h2>SMS</h2><p>${pkgObject.channels.sms.text}</p></section><section><h2>Print Letter (Legal)</h2><pre style="white-space:pre-wrap;font-family:inherit">${pkgObject.channels.print_stream.salutation}\n\n${pkgObject.channels.print_stream.body}\n\n${pkgObject.channels.print_stream.closing}</pre></section></body></html>`
+                  downloadPkg(html, 'html', 'text/html;charset=utf-8')
+                }}
+              >
+                Export HTML
+              </button>
             </div>
 
             <div className="adpDeliveryNote">
-              Approval never triggers automatic sending. Only explicitly approved channels may enter the publishing queue; delivery metrics populate only when connected providers return actual execution status.
+              Scope: Enterprise Channel Message Intelligence &amp; Adaptation Agent. Outputs are human-reviewed, validated, and packaged for consumption by your organisation's existing communication platforms (external publishing intentionally outside scope).
             </div>
 
             {auditEvents.length > 0 && (
@@ -1501,6 +1550,7 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
                   <div key={idx} className="adpAuditRow">
                     <span>{ev.ts}</span>
                     <strong>{ev.actor}</strong>
+                    <code>{ev.version}</code>
                     <span>{ev.action}</span>
                     <code>{ev.scope}</code>
                   </div>
