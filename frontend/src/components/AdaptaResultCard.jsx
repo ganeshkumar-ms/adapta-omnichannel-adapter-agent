@@ -258,12 +258,11 @@ function TabIcon({ type }) {
 }
 
 const CHANNEL_TABS = [
+  { key: 'sms', label: 'SMS (iOS / Android)' },
+  { key: 'linkedin', label: 'LinkedIn' },
+  { key: 'twitter', label: 'X Post & Thread' },
   { key: 'email', label: 'Outlook Email' },
   { key: 'whatsapp', label: 'WhatsApp' },
-  { key: 'sms', label: 'SMS (iOS / Android)' },
-  { key: 'print_letter', label: 'Print Letter (Legal)' },
-  { key: 'linkedin', label: 'LinkedIn' },
-  { key: 'twitter', label: 'X Post' },
   { key: 'push', label: 'Mobile Push' },
   { key: 'in_app', label: 'In-App Modal' },
   { key: 'payload', label: 'JSON Payload' }
@@ -277,8 +276,7 @@ const VOICE_PROFILES = [
 ]
 
 export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
-  const initialChannel = data?.channels?.email ? 'email' : (Object.keys(data?.channels || {})[0] || 'sms')
-  const [activeTab, setActiveTab] = useState(initialChannel)
+  const [activeTab, setActiveTab] = useState('sms')
   const [activeSubjectIdx, setActiveSubjectIdx] = useState(0)
   const [selectedVoice, setSelectedVoice] = useState('Corporate Executive')
   const [activeLang, setActiveLang] = useState('english')
@@ -558,45 +556,9 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
         </div>
       </div>
 
-      {/* 2B. COMMUNICATION INTELLIGENCE & CHANNEL STRATEGY (RECOMMENDED VS EXCLUDED) */}
-      {data.communication_intelligence && (
-        <div className="adpStrategyPanel">
-          <div className="adpStrategyHead">
-            <span className="adpModeBadge">{data.communication_intelligence.mode_label}</span>
-            <span className="adpObjText">{data.communication_intelligence.objective}</span>
-            <span className="adpApprovalTag">Ready for approval · No message sent</span>
-          </div>
-          <div className="adpDecisionGrid">
-            {(data.communication_intelligence.channel_decisions || []).map((dec, idx) => (
-              <div key={idx} className={`adpDecisionChip ${dec.decision === 'Recommended' ? 'rec' : 'exc'}`}>
-                <div className="adpDecisionTop">
-                  <strong>{dec.label}</strong>
-                  <span>{dec.decision}</span>
-                </div>
-                <div className="adpDecisionReason">{dec.reason}</div>
-              </div>
-            ))}
-          </div>
-          {data.quality_scores && (
-            <div className="adpQualityGrid">
-              <div><span>Fact Preservation</span><strong>{data.quality_scores.fact_preservation}/100</strong></div>
-              <div><span>Tone Alignment</span><strong>{data.quality_scores.tone_alignment}/100</strong></div>
-              <div><span>Channel Suitability</span><strong>{data.quality_scores.channel_suitability}/100</strong></div>
-              <div><span>Compliance Readiness</span><strong>{data.quality_scores.compliance_readiness}/100</strong></div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 3. RECOMMENDED CHANNEL TABS + JSON PAYLOAD STREAM */}
+      {/* 3. SEVEN CHANNEL TABS + JSON PAYLOAD STREAM (WITH SVG LINE ICONS) */}
       <div className="channelTabs">
-        {CHANNEL_TABS.filter(tab => {
-          if (tab.key === 'payload') return true
-          if (tab.key === 'whatsapp' || tab.key === 'print_letter') {
-            return data.communication_intelligence?.mode !== 'internal'
-          }
-          return Boolean(channels[tab.key])
-        }).map(tab => (
+        {CHANNEL_TABS.map(tab => (
           <button
             key={tab.key}
             type="button"
@@ -775,15 +737,18 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
           </div>
         )}
 
-        {/* 3. X / TWITTER POST (SINGLE POST — NO THREAD) */}
+        {/* 3. X / TWITTER POST & THREAD */}
         {activeTab === 'twitter' && (
           <div className="channelVariant twitterVariant">
             <div className="variantHeader">
-              <span className="variantTitle">X Post ({selectedVoice})</span>
+              <span className="variantTitle">X Post &amp; Thread ({selectedVoice})</span>
               <button
                 className="copyBtn"
                 type="button"
-                onClick={() => copyText(voiced.twTweet, 'twitter')}
+                onClick={() => copyText(
+                  `${voiced.twTweet}\n\nThread Points:\n${twThreads.join('\n')}`,
+                  'twitter'
+                )}
               >
                 {copiedKey === 'twitter' ? 'Copied' : 'Copy Post'}
               </button>
@@ -824,7 +789,24 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
 
               <div className="xTimestampRow">
                 <span>10:42 AM · Enterprise Verified</span>
+                <span>·</span>
+                <span className="xViews">58.4K Views</span>
               </div>
+
+              {twThreads.length > 0 && (
+                <div className="xThreadBox">
+                  <div className="xThreadLabel">Connected Thread Follow-ups:</div>
+                  {twThreads.map((item, idx) => (
+                    <div key={idx} className="xThreadItem">
+                      <div className="xThreadLine" />
+                      <div className="xThreadContent">
+                        <span className="xThreadIndex">{idx + 2}/</span>
+                        <p>{toText(item)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1094,56 +1076,6 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
             </div>
           </div>
         )}
-
-        {/* 7B. PRINT LETTER WITH LEGAL & REGULATORY DISCLOSURES */}
-        {activeTab === 'print_letter' && (() => {
-          const pl = channels.print_letter || {}
-          const letterHeadline = pl.headline || baseHeadline
-          const letterSal = pl.salutation || 'Dear Valued Customer,'
-          const letterBody = pl.body || rawEmailBody || summary
-          const letterLegal = pl.legal_disclosures || 'Legal & Regulatory Disclosures: Terms, conditions, and timelines stated in this letter remain binding.'
-          const letterClosing = pl.closing || 'Yours sincerely,\nCustomer Communications Team'
-          const fullLetterText = `${letterHeadline}\n\n${letterSal}\n\n${letterBody}\n\nLEGAL & REGULATORY DISCLOSURES\n${letterLegal}\n\n${letterClosing}`
-          return (
-            <div className="channelVariant printLetterVariant">
-              <div className="variantHeader">
-                <span className="variantTitle">Print Letter with Legal Disclosures ({selectedVoice})</span>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    className="copyBtn"
-                    type="button"
-                    onClick={() => copyText(fullLetterText, 'print_letter')}
-                  >
-                    {copiedKey === 'print_letter' ? 'Copied' : 'Copy Letter'}
-                  </button>
-                  <button
-                    className="copyBtn"
-                    type="button"
-                    onClick={() => {
-                      const w = window.open('', '_blank', 'width=820,height=900')
-                      if (!w) return
-                      w.document.write(`<!doctype html><html><head><title>${letterHeadline}</title><style>body{font-family:Aptos,Calibri,Arial,sans-serif;max-width:700px;margin:48px auto;color:#111827;line-height:1.6;font-size:12pt}h1{font-size:18pt;margin-bottom:16px}.legal{margin-top:24px;padding:12px 14px;border:1px solid #cbd5e1;background:#f8fafc;font-size:10.5pt}</style></head><body><h1>${letterHeadline}</h1><p>${letterSal}</p><p style="white-space:pre-wrap">${letterBody}</p><div class="legal"><strong>Legal &amp; Regulatory Disclosures</strong><br/>${letterLegal}</div><p style="margin-top:24px;white-space:pre-wrap">${letterClosing}</p></body></html>`)
-                      w.document.close()
-                      w.print()
-                    }}
-                  >
-                    Print / PDF
-                  </button>
-                </div>
-              </div>
-              <div className="adpPrintSheet">
-                <h3 className="adpPrintHeadline">{letterHeadline}</h3>
-                <p className="adpPrintPara">{letterSal}</p>
-                <p className="adpPrintPara" style={{ whiteSpace: 'pre-wrap' }}>{letterBody}</p>
-                <div className="adpPrintLegalBox">
-                  <strong>LEGAL &amp; REGULATORY DISCLOSURES</strong>
-                  <p>{letterLegal}</p>
-                </div>
-                <p className="adpPrintPara" style={{ whiteSpace: 'pre-wrap', marginTop: '12px' }}>{letterClosing}</p>
-              </div>
-            </div>
-          )
-        })()}
 
         {/* 8. JSON PAYLOAD STREAM TAB (COMPLETE OMNICHANNEL STREAM) */}
         {activeTab === 'payload' && (() => {

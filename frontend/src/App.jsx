@@ -184,8 +184,6 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeViewerDoc, setActiveViewerDoc] = useState(null)
-  const [audienceMode, setAudienceMode] = useState('auto')
-  const [preferredTone, setPreferredTone] = useState('Customer-first empathetic')
 
   const fileInputRef = useRef(null)
   const homeFileInputRef = useRef(null)
@@ -363,9 +361,7 @@ export default function App() {
         adaptMessage({
           file: fileToSend,
           text: cleanText,
-          conversationHistory: historyPayload,
-          audienceMode,
-          preferredTone
+          conversationHistory: historyPayload
         }),
         new Promise(res => setTimeout(res, 900))
       ])
@@ -473,26 +469,6 @@ export default function App() {
             <p className="sub">
               Transform corporate announcements, marketing copy, and documents into channel-optimized messages across Email, SMS, WhatsApp, Push, LinkedIn, X, and In-App.
             </p>
-
-            <div className="adpModeBar" role="group" aria-label="Communication audience mode">
-              <span className="adpModeLabel">Audience:</span>
-              {[
-                ['auto', 'Auto-Detect'],
-                ['individual', 'Individual'],
-                ['segment', 'Segment'],
-                ['organisation', 'Organisation-Wide'],
-                ['internal', 'Internal'],
-              ].map(([k, lbl]) => (
-                <button
-                  key={k}
-                  type="button"
-                  className={`adpModePill${audienceMode === k ? ' active' : ''}`}
-                  onClick={() => setAudienceMode(k)}
-                >
-                  {lbl}
-                </button>
-              ))}
-            </div>
 
             <div className="promptGlow">
               <form className="prompt" onSubmit={handleHomeSubmit}>
@@ -728,25 +704,6 @@ export default function App() {
 
               {/* Composer */}
               <div className="composerArea">
-                <div className="adpModeBar" role="group" aria-label="Communication audience mode" style={{ marginBottom: '8px' }}>
-                  <span className="adpModeLabel">Audience:</span>
-                  {[
-                    ['auto', 'Auto-Detect'],
-                    ['individual', 'Individual'],
-                    ['segment', 'Segment'],
-                    ['organisation', 'Organisation-Wide'],
-                    ['internal', 'Internal'],
-                  ].map(([k, lbl]) => (
-                    <button
-                      key={k}
-                      type="button"
-                      className={`adpModePill${audienceMode === k ? ' active' : ''}`}
-                      onClick={() => setAudienceMode(k)}
-                    >
-                      {lbl}
-                    </button>
-                  ))}
-                </div>
                 {selectedFile && (
                   <div style={{ display: 'flex', justifyContent: 'center', width: '100%', margin: '0 auto 10px' }}>
                     <div className="attachedRow composerAttached">
