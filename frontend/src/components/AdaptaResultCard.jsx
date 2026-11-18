@@ -1363,22 +1363,27 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
             ...prev
           ].slice(0, 6))
         }
+        const allChannelPayloads = {
+          email: { subject: emailSubjects[activeSubjectIdx] || baseHeadline, body: `${voiced.emailGreeting}\n\n${voiced.emailLead}\n\n${voiced.emailBody}\n\n${voiced.emailSignoff}` },
+          sms: { text: voiced.smsText },
+          whatsapp: { header: voiced.waHeader, body: voiced.waBody, footer: voiced.waFooter },
+          linkedin: { post: voiced.liPost },
+          twitter: { post: voiced.twTweet },
+          push: { title: voiced.pushTitle, body: voiced.pushBody },
+          in_app: { headline: voiced.inAppHead, body: voiced.inAppBody },
+          print_stream: { headline: baseHeadline, salutation: voiced.printSalutation, body: `${voiced.printLead}\n\n${voiced.emailBody}`, closing: voiced.printClosing },
+        }
+        const approvedChannelsMap = {}
+        approvedList.forEach(k => {
+          if (allChannelPayloads[k]) approvedChannelsMap[k] = allChannelPayloads[k]
+        })
         const pkgObject = {
           package_name: payload.campaign_name || baseHeadline || 'Approved_Communication_Package',
           version: `v${versionNum}`,
           lifecycle_state: campaignState,
           brand_voice: selectedVoice,
           approved_channels: approvedList,
-          channels: {
-            email: { subject: emailSubjects[activeSubjectIdx] || baseHeadline, body: `${voiced.emailGreeting}\n\n${voiced.emailLead}\n\n${voiced.emailBody}\n\n${voiced.emailSignoff}` },
-            sms: { text: voiced.smsText },
-            whatsapp: { header: voiced.waHeader, body: voiced.waBody, footer: voiced.waFooter },
-            linkedin: { post: voiced.liPost },
-            twitter: { post: voiced.twTweet },
-            push: { title: voiced.pushTitle, body: voiced.pushBody },
-            in_app: { headline: voiced.inAppHead, body: voiced.inAppBody },
-            print_stream: { headline: baseHeadline, salutation: voiced.printSalutation, body: `${voiced.printLead}\n\n${voiced.emailBody}`, closing: voiced.printClosing },
-          },
+          channels: approvedChannelsMap,
           fact_checker: verifiedFacts,
           compliance: complianceChecks,
           multilingual_variants: multilingualMap,
@@ -1510,33 +1515,14 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
             )}
 
             <div className="adpPublishRow">
-              <span className="adpExportLabel">Export Approved Communication Package:</span>
+              <span className="adpExportLabel">Export Approved Package:</span>
               <button
                 type="button"
                 className="adpGovBtn primary"
+                disabled={approvedList.length === 0}
                 onClick={() => downloadPkg(JSON.stringify(pkgObject, null, 2), 'json', 'application/json;charset=utf-8')}
               >
-                Export JSON
-              </button>
-              <button
-                type="button"
-                className="adpGovBtn"
-                onClick={() => {
-                  const txt = `APPROVED COMMUNICATION PACKAGE (${pkgObject.version})\nStatus: ${campaignState} | Brand Voice: ${selectedVoice}\n\n--- OUTLOOK EMAIL ---\nSubject: ${pkgObject.channels.email.subject}\n${pkgObject.channels.email.body}\n\n--- WHATSAPP ---\n${pkgObject.channels.whatsapp.header}\n${pkgObject.channels.whatsapp.body}\n\n--- SMS ---\n${pkgObject.channels.sms.text}\n\n--- LINKEDIN ---\n${pkgObject.channels.linkedin.post}\n\n--- X POST ---\n${pkgObject.channels.twitter.post}\n\n--- PRINT LETTER (LEGAL) ---\n${pkgObject.channels.print_stream.headline}\n${pkgObject.channels.print_stream.salutation}\n${pkgObject.channels.print_stream.body}\n${pkgObject.channels.print_stream.closing}\n`
-                  downloadPkg(txt, 'txt', 'text/plain;charset=utf-8')
-                }}
-              >
-                Export TXT
-              </button>
-              <button
-                type="button"
-                className="adpGovBtn"
-                onClick={() => {
-                  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${baseHeadline}</title><style>body{font-family:Aptos,Calibri,Arial,sans-serif;max-width:820px;margin:40px auto;color:#0f172a;line-height:1.6}section{margin-bottom:24px;padding:16px;border:1px solid #cbd5e1;border-radius:8px}h2{margin-top:0;color:#0b3c78;font-size:16px}</style></head><body><h1>${baseHeadline} (${pkgObject.version})</h1><p><strong>Status:</strong> ${campaignState} | <strong>Brand Voice:</strong> ${selectedVoice}</p><section><h2>Outlook Email</h2><p><strong>Subject:</strong> ${pkgObject.channels.email.subject}</p><pre style="white-space:pre-wrap;font-family:inherit">${pkgObject.channels.email.body}</pre></section><section><h2>WhatsApp</h2><pre style="white-space:pre-wrap;font-family:inherit">${pkgObject.channels.whatsapp.header}\n${pkgObject.channels.whatsapp.body}</pre></section><section><h2>SMS</h2><p>${pkgObject.channels.sms.text}</p></section><section><h2>Print Letter (Legal)</h2><pre style="white-space:pre-wrap;font-family:inherit">${pkgObject.channels.print_stream.salutation}\n\n${pkgObject.channels.print_stream.body}\n\n${pkgObject.channels.print_stream.closing}</pre></section></body></html>`
-                  downloadPkg(html, 'html', 'text/html;charset=utf-8')
-                }}
-              >
-                Export HTML
+                Export Approved JSON ({approvedList.length})
               </button>
             </div>
 
