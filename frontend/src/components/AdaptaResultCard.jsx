@@ -276,7 +276,8 @@ const VOICE_PROFILES = [
 ]
 
 export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
-  const [activeTab, setActiveTab] = useState('sms')
+  const initialChannel = data?.channels?.email ? 'email' : (Object.keys(data?.channels || {})[0] || 'sms')
+  const [activeTab, setActiveTab] = useState(initialChannel)
   const [activeSubjectIdx, setActiveSubjectIdx] = useState(0)
   const [selectedVoice, setSelectedVoice] = useState('Corporate Executive')
   const [activeLang, setActiveLang] = useState('english')
@@ -556,9 +557,39 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
         </div>
       </div>
 
-      {/* 3. SEVEN CHANNEL TABS + JSON PAYLOAD STREAM (WITH SVG LINE ICONS) */}
+      {/* 2B. COMMUNICATION INTELLIGENCE & CHANNEL STRATEGY (RECOMMENDED VS EXCLUDED) */}
+      {data.communication_intelligence && (
+        <div className="adpStrategyPanel">
+          <div className="adpStrategyHead">
+            <span className="adpModeBadge">{data.communication_intelligence.mode_label}</span>
+            <span className="adpObjText">{data.communication_intelligence.objective}</span>
+            <span className="adpApprovalTag">Ready for approval · No message sent</span>
+          </div>
+          <div className="adpDecisionGrid">
+            {(data.communication_intelligence.channel_decisions || []).map((dec, idx) => (
+              <div key={idx} className={`adpDecisionChip ${dec.decision === 'Recommended' ? 'rec' : 'exc'}`}>
+                <div className="adpDecisionTop">
+                  <strong>{dec.label}</strong>
+                  <span>{dec.decision}</span>
+                </div>
+                <div className="adpDecisionReason">{dec.reason}</div>
+              </div>
+            ))}
+          </div>
+          {data.quality_scores && (
+            <div className="adpQualityGrid">
+              <div><span>Fact Preservation</span><strong>{data.quality_scores.fact_preservation}/100</strong></div>
+              <div><span>Tone Alignment</span><strong>{data.quality_scores.tone_alignment}/100</strong></div>
+              <div><span>Channel Suitability</span><strong>{data.quality_scores.channel_suitability}/100</strong></div>
+              <div><span>Compliance Readiness</span><strong>{data.quality_scores.compliance_readiness}/100</strong></div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 3. RECOMMENDED CHANNEL TABS + JSON PAYLOAD STREAM */}
       <div className="channelTabs">
-        {CHANNEL_TABS.map(tab => (
+        {CHANNEL_TABS.filter(tab => tab.key === 'payload' || Boolean(channels[tab.key])).map(tab => (
           <button
             key={tab.key}
             type="button"

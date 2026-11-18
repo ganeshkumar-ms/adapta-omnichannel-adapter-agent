@@ -36,8 +36,8 @@ def health():
     return {
         "status": "ok",
         "agent": "ADAPTA",
-        "eyebrow": "CHANNEL MESSAGE ADAPTER",
-        "service": "Enterprise Omnichannel Message & Content Adaptation Engine"
+        "eyebrow": "OMNICHANNEL COMMUNICATION INTELLIGENCE",
+        "service": "Enterprise Omnichannel Communication Intelligence Agent"
     }
 
 
@@ -62,12 +62,20 @@ def get_document(filename: str):
 async def adapt(
     file: Optional[UploadFile] = File(None),
     text: Optional[str] = Form(None),
-    conversation_history: Optional[str] = Form('[]')
+    conversation_history: Optional[str] = Form('[]'),
+    audience_mode: Optional[str] = Form('auto'),
+    objective: Optional[str] = Form('auto'),
+    preferred_tone: Optional[str] = Form('Customer-first empathetic'),
+    preferred_channels: Optional[str] = Form('[]'),
 ):
     try:
         history = json.loads(conversation_history or '[]')
     except json.JSONDecodeError:
         history = []
+    try:
+        pref_ch = json.loads(preferred_channels or '[]')
+    except json.JSONDecodeError:
+        pref_ch = []
 
     doc_meta = None
     combined_text = text or ''
@@ -127,7 +135,11 @@ async def adapt(
     result = adapta_service.adapt_message(
         content=clean_content,
         file_name=file_name,
-        conversation_history=history
+        conversation_history=history,
+        audience_mode=audience_mode or 'auto',
+        objective=objective or 'auto',
+        preferred_tone=preferred_tone or 'Customer-first empathetic',
+        preferred_channels=pref_ch if isinstance(pref_ch, list) else [],
     )
 
     if doc_meta:

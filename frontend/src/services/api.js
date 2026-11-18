@@ -1,6 +1,14 @@
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
-export async function adaptMessage({ file, text, conversationHistory = [] }) {
+export async function adaptMessage({
+  file,
+  text,
+  conversationHistory = [],
+  audienceMode = 'auto',
+  objective = 'auto',
+  preferredTone = 'Customer-first empathetic',
+  preferredChannels = []
+}) {
   const formData = new FormData()
   if (file) {
     formData.append('file', file)
@@ -9,6 +17,10 @@ export async function adaptMessage({ file, text, conversationHistory = [] }) {
     formData.append('text', text)
   }
   formData.append('conversation_history', JSON.stringify(conversationHistory))
+  formData.append('audience_mode', audienceMode)
+  formData.append('objective', objective)
+  formData.append('preferred_tone', preferredTone)
+  formData.append('preferred_channels', JSON.stringify(preferredChannels))
 
   const url = `${API_BASE}/api/adapt`
   const res = await fetch(url, {
