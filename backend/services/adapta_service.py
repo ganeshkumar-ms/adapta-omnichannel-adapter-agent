@@ -470,15 +470,20 @@ def adapt_message(content: str, file_name: str = "", conversation_history: list 
         client = get_bedrock_client()
 
         messages = []
+        prior_source_text = ''
         if conversation_history:
             for item in conversation_history[-4:]:
                 role = 'user' if item.get('role') == 'user' else 'assistant'
                 txt = item.get('content') or ''
+                if role == 'user' and len(txt.strip().split()) >= 15:
+                    prior_source_text = txt.strip()
                 if txt.strip():
                     messages.append({
                         "role": role,
                         "content": [{"text": txt.strip()[:1500]}]
                     })
+
+        effective_source_text = prior_source_text if (not file_name and len(safe_text.split()) < 18 and prior_source_text) else safe_text
 
         prompt_text = (
             f"Adapt the following content into all 7 enterprise channels, verify facts in `fact_checker`, "
@@ -486,7 +491,10 @@ def adapt_message(content: str, file_name: str = "", conversation_history: list 
         )
         if file_name:
             prompt_text += f"[SOURCE ATTACHMENT: {file_name}]\n"
-        prompt_text += safe_text
+        if effective_source_text != safe_text:
+            prompt_text += f"[USER REFINEMENT INSTRUCTION: {safe_text}]\n[ORIGINAL SOURCE CONTENT TO ADAPT]:\n{effective_source_text}"
+        else:
+            prompt_text += safe_text
 
         messages.append({
             "role": "user",
@@ -516,9 +524,14 @@ def adapt_message(content: str, file_name: str = "", conversation_history: list 
             raw_output = response['output']['message']['content'][0]['text']
             parsed = clean_and_parse_json(raw_output)
             if parsed and isinstance(parsed, dict) and ('type' in parsed or 'channels' in parsed):
+                if (parsed.get('type') == 'adaptation' or 'channels' in parsed) and not file_name and len(effective_source_text.split()) < 14:
+                    return {
+                        'type': 'chat',
+                        'message': parsed.get('message') or "Please share or attach the campaign communication content you would like me to adapt across channels.",
+                    }
                 if parsed.get('type') == 'adaptation' or 'channels' in parsed:
                     parsed['type'] = 'adaptation'
-                    parsed = _enrich_enterprise_adapta_payload(parsed, safe_text, file_name)
+                    parsed = _enrich_enterprise_adapta_payload(parsed, effective_source_text, file_name)
                 trace_code = f"ADP-{datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
                 parsed['trace_id'] = trace_code
                 parsed['guardrails'] = {
@@ -539,9 +552,14 @@ def adapt_message(content: str, file_name: str = "", conversation_history: list 
             raw_output = response['output']['message']['content'][0]['text']
             parsed = clean_and_parse_json(raw_output)
             if parsed and isinstance(parsed, dict) and ('type' in parsed or 'channels' in parsed):
+                if (parsed.get('type') == 'adaptation' or 'channels' in parsed) and not file_name and len(effective_source_text.split()) < 14:
+                    return {
+                        'type': 'chat',
+                        'message': parsed.get('message') or "Please share or attach the campaign communication content you would like me to adapt across channels.",
+                    }
                 if parsed.get('type') == 'adaptation' or 'channels' in parsed:
                     parsed['type'] = 'adaptation'
-                    parsed = _enrich_enterprise_adapta_payload(parsed, safe_text, file_name)
+                    parsed = _enrich_enterprise_adapta_payload(parsed, effective_source_text, file_name)
                 trace_code = f"ADP-{datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
                 parsed['trace_id'] = trace_code
                 parsed['guardrails'] = {
@@ -555,7 +573,12 @@ def adapt_message(content: str, file_name: str = "", conversation_history: list 
     except Exception as e:
         print(f"Bedrock invocation exception: {e}")
 
-    res = rule_based_adaptation_fallback(safe_text, file_name)
+    if not file_name and len(effective_source_text.split()) < 14:
+        return {
+            'type': 'chat',
+            'message': "Please share or attach the source communication you would like me to adapt into an approved multi-channel package.",
+        }
+    res = rule_based_adaptation_fallback(effective_source_text, file_name)
     trace_code = f"ADP-{datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
     if isinstance(res, dict):
         res['trace_id'] = trace_code
