@@ -221,7 +221,9 @@ export default function App() {
   function goHome() {
     setCurrentSessionId(null)
     setMessages([])
-    clearSelectedFile()
+    setSelectedFile(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    if (homeFileInputRef.current) homeFileInputRef.current.value = ''
     setActiveViewerDoc(null)
     setView('home')
   }
