@@ -265,6 +265,7 @@ const CHANNEL_TABS = [
   { key: 'whatsapp', label: 'WhatsApp' },
   { key: 'push', label: 'Mobile Push' },
   { key: 'in_app', label: 'In-App Modal' },
+  { key: 'print_stream', label: 'Print Stream (Legal)' },
   { key: 'payload', label: 'JSON Payload' }
 ]
 
@@ -281,6 +282,11 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
   const [selectedVoice, setSelectedVoice] = useState('Corporate Executive')
   const [activeLang, setActiveLang] = useState('english')
   const [copiedKey, setCopiedKey] = useState('')
+  const [campaignState, setCampaignState] = useState('AWAITING_APPROVAL')
+  const [channelApprovals, setChannelApprovals] = useState({})
+  const [scheduleAt, setScheduleAt] = useState('')
+  const [approverName, setApproverName] = useState('Campaign Approver')
+  const [auditEvents, setAuditEvents] = useState([])
 
   const guardrails = propGuardrails || data?.guardrails || {}
   const traceId = data?.trace_id || guardrails?.trace_id || ''
@@ -1077,6 +1083,56 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
           </div>
         )}
 
+        {/* 7B. PRINT STREAM WITH LEGAL & REGULATORY DISCLOSURES */}
+        {activeTab === 'print_stream' && (() => {
+          const pl = channels.print_letter || channels.print_stream || {}
+          const letterHeadline = pl.headline || baseHeadline
+          const letterSal = pl.salutation || 'Dear Valued Customer,'
+          const letterBody = pl.body || rawEmailBody || summary
+          const letterLegal = pl.legal_disclosures || 'Legal & Regulatory Disclosures: All terms, conditions, deadlines, and financial figures stated in this communication remain binding per your governing agreement.'
+          const letterClosing = pl.closing || 'Yours sincerely,\nCustomer Communications Team'
+          const fullLetterText = `${letterHeadline}\n\n${letterSal}\n\n${letterBody}\n\nLEGAL & REGULATORY DISCLOSURES\n${letterLegal}\n\n${letterClosing}`
+          return (
+            <div className="channelVariant printLetterVariant">
+              <div className="variantHeader">
+                <span className="variantTitle">Print Stream with Legal Disclosures ({selectedVoice})</span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    className="copyBtn"
+                    type="button"
+                    onClick={() => copyText(fullLetterText, 'print_stream')}
+                  >
+                    {copiedKey === 'print_stream' ? 'Copied' : 'Copy Letter'}
+                  </button>
+                  <button
+                    className="copyBtn"
+                    type="button"
+                    onClick={() => {
+                      const w = window.open('', '_blank', 'width=820,height=900')
+                      if (!w) return
+                      w.document.write(`<!doctype html><html><head><title>${letterHeadline}</title><style>body{font-family:Aptos,Calibri,Arial,sans-serif;max-width:700px;margin:48px auto;color:#111827;line-height:1.6;font-size:12pt}h1{font-size:18pt;margin-bottom:16px}.legal{margin-top:24px;padding:12px 14px;border:1px solid #cbd5e1;background:#f8fafc;font-size:10.5pt}</style></head><body><h1>${letterHeadline}</h1><p>${letterSal}</p><p style="white-space:pre-wrap">${letterBody}</p><div class="legal"><strong>Legal &amp; Regulatory Disclosures</strong><br/>${letterLegal}</div><p style="margin-top:24px;white-space:pre-wrap">${letterClosing}</p></body></html>`)
+                      w.document.close()
+                      w.print()
+                    }}
+                  >
+                    Print / PDF
+                  </button>
+                </div>
+              </div>
+              <div className="adpPrintSheet">
+                <h3 className="adpPrintHeadline">{letterHeadline}</h3>
+                <p className="adpPrintPara">{letterSal}</p>
+                <p className="adpPrintPara" style={{ whiteSpace: 'pre-wrap' }}>{letterBody}</p>
+                <div className="adpPrintLegalBox">
+                  <strong>LEGAL &amp; REGULATORY DISCLOSURES</strong>
+                  <p>{letterLegal}</p>
+                </div>
+                <p className="adpPrintPara" style={{ whiteSpace: 'pre-wrap', marginTop: '12px' }}>{letterClosing}</p>
+              </div>
+            </div>
+          )
+        })()}
+
         {/* 8. JSON PAYLOAD STREAM TAB (COMPLETE OMNICHANNEL STREAM) */}
         {activeTab === 'payload' && (() => {
           const fullJsonStream = {
@@ -1272,6 +1328,166 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
           {toText(multilingualMap[activeLang])}
         </div>
       </div>
+
+      {/* 7. HUMAN APPROVAL, PUBLISHING & DELIVERY MANAGEMENT */}
+      {(() => {
+        const approvableKeys = ['email', 'sms', 'whatsapp', 'linkedin', 'twitter', 'push', 'in_app', 'print_stream']
+        const approvedList = approvableKeys.filter(k => channelApprovals[k] === 'APPROVED')
+        const logEvent = (action, scope) => {
+          setAuditEvents(prev => [
+            { ts: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC', actor: approverName || 'Campaign Approver', action, scope },
+            ...prev
+          ].slice(0, 6))
+        }
+        return (
+          <div className="adpEnterprisePanel">
+            <div className="adpPanelHead">
+              <span className="adpPanelTitle">5. HUMAN APPROVAL, PUBLISHING &amp; DELIVERY MANAGEMENT</span>
+              <span className={`adpPanelBadge ${campaignState === 'APPROVED' || campaignState === 'SENT' ? 'green' : ''}`}>
+                {campaignState}
+              </span>
+            </div>
+
+            <div className="adpApprovalChannels">
+              {approvableKeys.map(k => {
+                const st = channelApprovals[k] || 'AWAITING_APPROVAL'
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    className={`adpChApproveChip ${st === 'APPROVED' ? 'approved' : ''}`}
+                    onClick={() => {
+                      const next = st === 'APPROVED' ? 'AWAITING_APPROVAL' : 'APPROVED'
+                      setChannelApprovals(prev => ({ ...prev, [k]: next }))
+                      logEvent(next === 'APPROVED' ? 'Approved Channel' : 'Revoked Channel Approval', k)
+                    }}
+                  >
+                    <span>{k.replace('_', ' ').toUpperCase()}</span>
+                    <strong>{st === 'APPROVED' ? 'APPROVED' : 'PENDING'}</strong>
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="adpApprovalActions">
+              <input
+                type="text"
+                className="adpApproverInput"
+                value={approverName}
+                onChange={e => setApproverName(e.target.value)}
+                placeholder="Approver Name / Role"
+                aria-label="Approver Name"
+              />
+              <button
+                type="button"
+                className="adpGovBtn primary"
+                onClick={() => {
+                  const all = {}
+                  approvableKeys.forEach(k => { all[k] = 'APPROVED' })
+                  setChannelApprovals(all)
+                  setCampaignState('APPROVED')
+                  logEvent('Approved All Channels', approvableKeys.join(', '))
+                }}
+              >
+                Approve All Channels
+              </button>
+              <button
+                type="button"
+                className="adpGovBtn"
+                onClick={() => {
+                  if (approvedList.length === 0) return
+                  setCampaignState('APPROVED')
+                  logEvent('Approved Selected Channels', approvedList.join(', '))
+                }}
+              >
+                Approve Selected ({approvedList.length})
+              </button>
+              <button
+                type="button"
+                className="adpGovBtn"
+                onClick={() => { setCampaignState('DRAFT'); logEvent('Saved as Draft', 'All') }}
+              >
+                Save Draft
+              </button>
+              <button
+                type="button"
+                className="adpGovBtn"
+                onClick={() => { setCampaignState('REVIEW_REQUIRED'); logEvent('Requested Revision', 'All') }}
+              >
+                Request Revision
+              </button>
+              <button
+                type="button"
+                className="adpGovBtn danger"
+                onClick={() => { setCampaignState('REJECTED'); setChannelApprovals({}); logEvent('Rejected Campaign', 'All') }}
+              >
+                Reject
+              </button>
+            </div>
+
+            <div className="adpPublishRow">
+              <button
+                type="button"
+                className="adpGovBtn primary"
+                disabled={approvedList.length === 0 || campaignState === 'REJECTED'}
+                onClick={() => {
+                  setCampaignState('QUEUED_FOR_PROVIDER')
+                  logEvent('Queued Approved Channels (Awaiting Provider Confirmation)', approvedList.join(', '))
+                }}
+              >
+                Send Now ({approvedList.length} Approved)
+              </button>
+              <input
+                type="datetime-local"
+                className="adpApproverInput"
+                value={scheduleAt}
+                onChange={e => setScheduleAt(e.target.value)}
+                aria-label="Schedule time"
+              />
+              <button
+                type="button"
+                className="adpGovBtn"
+                disabled={approvedList.length === 0 || !scheduleAt}
+                onClick={() => {
+                  setCampaignState('SCHEDULED')
+                  logEvent(`Scheduled for ${scheduleAt}`, approvedList.join(', '))
+                }}
+              >
+                Schedule for Later
+              </button>
+              {campaignState === 'SCHEDULED' && (
+                <button
+                  type="button"
+                  className="adpGovBtn danger"
+                  onClick={() => {
+                    setCampaignState('CANCELLED')
+                    logEvent('Cancelled Scheduled Campaign', approvedList.join(', '))
+                  }}
+                >
+                  Cancel Scheduled
+                </button>
+              )}
+            </div>
+
+            <div className="adpDeliveryNote">
+              Approval never triggers automatic sending. Only explicitly approved channels may enter the publishing queue; delivery metrics populate only when connected providers return actual execution status.
+            </div>
+
+            {auditEvents.length > 0 && (
+              <div className="adpAuditLog">
+                {auditEvents.map((ev, idx) => (
+                  <div key={idx} className="adpAuditRow">
+                    <span>{ev.ts}</span>
+                    <strong>{ev.actor}</strong>
+                    <span>{ev.action}</span>
+                    <code>{ev.scope}</code>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      })()}
     </div>
   )
 }
