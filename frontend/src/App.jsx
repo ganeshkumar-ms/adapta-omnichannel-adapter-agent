@@ -184,6 +184,8 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeViewerDoc, setActiveViewerDoc] = useState(null)
+  const [audienceMode, setAudienceMode] = useState('auto')
+  const [preferredTone, setPreferredTone] = useState('Customer-first empathetic')
 
   const fileInputRef = useRef(null)
   const homeFileInputRef = useRef(null)
@@ -361,7 +363,9 @@ export default function App() {
         adaptMessage({
           file: fileToSend,
           text: cleanText,
-          conversationHistory: historyPayload
+          conversationHistory: historyPayload,
+          audienceMode,
+          preferredTone
         }),
         new Promise(res => setTimeout(res, 900))
       ])
