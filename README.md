@@ -1,4 +1,4 @@
-# ADAPTA — Omnichannel Message & Content Adaptation Engine
+b# ADAPTA — Omnichannel Message & Content Adaptation Engine
 
 > One message. Every channel.
 

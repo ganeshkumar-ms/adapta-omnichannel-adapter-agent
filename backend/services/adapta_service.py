@@ -162,9 +162,9 @@ Output ONLY valid JSON matching this structure:
   },
   "multilingual_variants": {
     "english": "Core adapted summary message in English with CTA.",
-    "tamil": "Natural, professional Tamil (தமிழ்) adaptation of the core announcement and CTA.",
-    "hindi": "Natural, professional Hindi (हिन्दी) adaptation of the core announcement and CTA.",
-    "malayalam": "Natural, professional Malayalam (മലയാളം) adaptation of the core announcement and CTA."
+    "german": "Natural, professional German (Deutsch) adaptation of the core announcement and CTA.",
+    "french": "Natural, professional French (Français) adaptation of the core announcement and CTA.",
+    "spanish": "Natural, professional Spanish (Español) adaptation of the core announcement and CTA."
   },
   "recommendations": [
     "Recommendation 1",
@@ -182,12 +182,12 @@ CRITICAL: Return ONLY valid JSON.
 RAPID_INTERCEPTOR_PATTERNS = [
     (re.compile(r'^\s*(?:bro+|bruh+|dude+|bhai+|machan+|yaar+|buddy|man)\s*$', re.I),
      [
-         "Hey bro. Ready when you are — share your message or attach a document to generate 7 channel variants, fact verification, brand voice scoring, multilingual translations (Tamil, Hindi, Malayalam), and approval controls.",
+         "Hey bro. Ready when you are — share your message or attach a document to generate 7 channel variants, fact verification, brand voice scoring, multilingual translations (English, German, French, Spanish), and approval controls.",
          "Yo bro. Drop your copy or file and I will adapt it across SMS, LinkedIn, X, Outlook Email, WhatsApp, Push, and In-App with full fact checking."
      ]),
     (re.compile(r'^\s*(?:hi+|h[ea]y+|h[ea]llo+|hlo|hola|yo+|sup)\s*$', re.I),
      [
-         "Hello. Paste your announcement or upload a document to generate 7 channel-ready messages, fact-checker verification, brand voice alignment, multilingual variants (Tamil, Hindi, Malayalam), and approval workflow controls.",
+         "Hello. Paste your announcement or upload a document to generate 7 channel-ready messages, fact-checker verification, brand voice alignment, multilingual variants (English, German, French, Spanish), and approval workflow controls.",
          "Welcome to ADAPTA. Share any message or file to adapt it across all 7 enterprise channels with fact checking and compliance verification."
      ]),
     (re.compile(r'^\s*namaste\s*$', re.I),
@@ -334,13 +334,13 @@ def _enrich_enterprise_adapta_payload(parsed: dict, source_text: str, file_name:
         ]
 
     ml = parsed.get("multilingual_variants")
-    if not isinstance(ml, dict) or not ml.get("tamil"):
+    if not isinstance(ml, dict) or not ml.get("german"):
         en_summary = parsed.get("adaptation_readiness", {}).get("summary") or f"Important update regarding {first_line}. Please review the details and take action."
         parsed["multilingual_variants"] = {
             "english": en_summary,
-            "tamil": f"முக்கிய அறிவிப்பு ({first_line}): இந்த தகவலின் முக்கிய விவரங்களை உடனடியாகப் பார்வையிட்டு தேவையான நடவடிக்கையை மேற்கொள்ளவும். மேலும் விவரங்களுக்கு அதிகாரப்பூர்வ இணைப்பைப் பயன்படுத்தவும்.",
-            "hindi": f"महत्वपूर्ण सूचना ({first_line}): कृपया इस अद्यतन के प्रमुख विवरणों की समीक्षा करें और निर्धारित समय सीमा के भीतर आवश्यक कार्रवाई पूरी करें। अधिक जानकारी के लिए आधिकारिक पोर्टल देखें।",
-            "malayalam": f"പ്രധാന അറിയിപ്പ് ({first_line}): ഈ അറിയിപ്പിലെ പ്രധാന വിവരങ്ങൾ പരിശോധിച്ച് ആവശ്യമായ തുടർനടவடிக்கകൾ സ്വീകരിക്കുക. കൂടുതൽ വിവരങ്ങൾക്ക് ഔദ്യോഗിക പോർട്ടൽ സന്ദർശിക്കുക."
+            "german": f"Wichtige Mitteilung ({first_line}): Bitte prüfen Sie die wesentlichen Details dieses Updates und ergreifen Sie die erforderlichen Schritte über das offizielle Portal.",
+            "french": f"Information importante ({first_line}) : Veuillez consulter les détails clés de cette mise à jour et effectuer les démarches nécessaires via le portail officiel.",
+            "spanish": f"Aviso importante ({first_line}): Revise los detalles principales de esta actualización y complete las acciones requeridas a través del portal oficial."
         }
 
     return parsed
@@ -487,7 +487,7 @@ def adapt_message(content: str, file_name: str = "", conversation_history: list 
 
         prompt_text = (
             f"Adapt the following content into all 7 enterprise channels, verify facts in `fact_checker`, "
-            f"evaluate `brand_voice`, build `quality_compliance_report`, and generate `multilingual_variants` in English, Tamil, Hindi, and Malayalam.\n"
+            f"evaluate `brand_voice`, build `quality_compliance_report`, and generate `multilingual_variants` in English, German, French, and Spanish.\n"
         )
         if file_name:
             prompt_text += f"[SOURCE ATTACHMENT: {file_name}]\n"

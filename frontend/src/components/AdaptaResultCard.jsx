@@ -489,11 +489,12 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
         ]
 
   const baseHeadline = (emailSubjects[0] || rawPushTitle || rawInAppHead || 'Enterprise Announcement').replace(/^Official Update:\s*/i, '')
-  const multilingualMap = data.multilingual_variants || {
-    english: `${summary}\n\nPrimary Message: ${voiced.smsText || rawEmailBody.slice(0, 220)}`,
-    tamil: `முக்கிய நிறுவன அறிவிப்பு (${baseHeadline}): இந்த அறிவிப்பின் முக்கிய விவரங்கள், தேதிகள் மற்றும் விதிமுறைகள் அனைத்தும் சரிபார்க்கப்பட்டுள்ளன. உடனடியாக அதிகாரப்பூர்வ இணைப்பைப் பயன்படுத்தி முழு விவரங்களையும் பார்வையிடவும்.`,
-    hindi: `महत्वपूर्ण कॉर्पोरेट सूचना (${baseHeadline}): इस अद्यतन की सभी तिथियां, विवरण और शर्तें सत्यापित की गई हैं। कृपया पूर्ण विवरण देखने और आवश्यक कार्रवाई करने के लिए आधिकारिक पोर्टल लिंक का उपयोग करें।`,
-    malayalam: `പ്രധാന അറിയിപ്പ് (${baseHeadline}): ഈ അറിയിപ്പിലെ പ്രധാന വിവരങ്ങളും സമയക്രമങ്ങളും പൂർണ്ണമായി പരിശോധിച്ചുറപ്പിച്ചിട്ടുണ്ട്. കൂടുതൽ വിവരങ്ങൾക്കായി ഔദ്യോഗിക പോർട്ടൽ സന്ദർശിക്കുക.`
+  const rawMl = data.multilingual_variants || {}
+  const multilingualMap = {
+    english: rawMl.english || `${summary}\n\nPrimary Message: ${voiced.smsText || rawEmailBody.slice(0, 220)}`,
+    german: rawMl.german || `Wichtige Unternehmensmitteilung (${baseHeadline}): Alle wesentlichen Details, Termine und Hinweise dieser Mitteilung wurden überprüft. Bitte nutzen Sie den offiziellen Link für weitere Informationen.`,
+    french: rawMl.french || `Communication officielle (${baseHeadline}) : L'ensemble des informations clés, dates et modalités de cette annonce ont été vérifiés. Veuillez consulter le portail officiel pour plus de détails.`,
+    spanish: rawMl.spanish || `Comunicado corporativo (${baseHeadline}): Todos los detalles clave, fechas y condiciones de este aviso han sido verificados. Consulte el portal oficial para obtener la información completa.`
   }
 
   function copyText(text, key) {
@@ -1335,10 +1336,10 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
         </div>
       </div>
 
-      {/* 6. MULTILINGUAL SUPPORT (ENGLISH, TAMIL, HINDI, MALAYALAM) */}
+      {/* 6. MULTILINGUAL SUPPORT (ENGLISH, GERMAN, FRENCH, SPANISH) */}
       <div className="adpEnterprisePanel">
         <div className="adpPanelHead">
-          <span className="adpPanelTitle">4. MULTILINGUAL ADAPTATIONS (REGIONAL &amp; GLOBAL)</span>
+          <span className="adpPanelTitle">4. MULTILINGUAL ADAPTATIONS</span>
           <button
             type="button"
             className="copyBtn"
@@ -1351,9 +1352,9 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
         <div className="adpLangTabs">
           {[
             { key: 'english', label: 'English' },
-            { key: 'tamil', label: 'Tamil (தமிழ்)' },
-            { key: 'hindi', label: 'Hindi (हिन्दी)' },
-            { key: 'malayalam', label: 'Malayalam (മലയാളം)' }
+            { key: 'german', label: 'German (Deutsch)' },
+            { key: 'french', label: 'French (Français)' },
+            { key: 'spanish', label: 'Spanish (Español)' }
           ].map(l => (
             <button
               key={l.key}
