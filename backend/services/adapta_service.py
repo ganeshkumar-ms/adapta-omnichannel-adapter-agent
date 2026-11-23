@@ -164,7 +164,8 @@ Output ONLY valid JSON matching this structure:
     "english": "Core adapted summary message in English with CTA.",
     "german": "Natural, professional German (Deutsch) adaptation of the core announcement and CTA.",
     "french": "Natural, professional French (Français) adaptation of the core announcement and CTA.",
-    "spanish": "Natural, professional Spanish (Español) adaptation of the core announcement and CTA."
+    "spanish": "Natural, professional Spanish (Español) adaptation of the core announcement and CTA.",
+    "japanese": "Natural, professional Japanese (日本語) adaptation of the core announcement and CTA."
   },
   "recommendations": [
     "Recommendation 1",
@@ -182,12 +183,12 @@ CRITICAL: Return ONLY valid JSON.
 RAPID_INTERCEPTOR_PATTERNS = [
     (re.compile(r'^\s*(?:bro+|bruh+|dude+|bhai+|machan+|yaar+|buddy|man)\s*$', re.I),
      [
-         "Hey bro. Ready when you are — share your message or attach a document to generate 7 channel variants, fact verification, brand voice scoring, multilingual translations (English, German, French, Spanish), and approval controls.",
+         "Hey bro. Ready when you are — share your message or attach a document to generate 7 channel variants, fact verification, brand voice scoring, multilingual translations (English, German, French, Spanish, Japanese), and approval controls.",
          "Yo bro. Drop your copy or file and I will adapt it across SMS, LinkedIn, X, Outlook Email, WhatsApp, Push, and In-App with full fact checking."
      ]),
     (re.compile(r'^\s*(?:hi+|h[ea]y+|h[ea]llo+|hlo|hola|yo+|sup)\s*$', re.I),
      [
-         "Hello. Paste your announcement or upload a document to generate 7 channel-ready messages, fact-checker verification, brand voice alignment, multilingual variants (English, German, French, Spanish), and approval workflow controls.",
+         "Hello. Paste your announcement or upload a document to generate 7 channel-ready messages, fact-checker verification, brand voice alignment, multilingual variants (English, German, French, Spanish, Japanese), and approval workflow controls.",
          "Welcome to ADAPTA. Share any message or file to adapt it across all 7 enterprise channels with fact checking and compliance verification."
      ]),
     (re.compile(r'^\s*namaste\s*$', re.I),
@@ -334,13 +335,14 @@ def _enrich_enterprise_adapta_payload(parsed: dict, source_text: str, file_name:
         ]
 
     ml = parsed.get("multilingual_variants")
-    if not isinstance(ml, dict) or not ml.get("german"):
+    if not isinstance(ml, dict) or not ml.get("german") or not ml.get("japanese"):
         en_summary = parsed.get("adaptation_readiness", {}).get("summary") or f"Important update regarding {first_line}. Please review the details and take action."
         parsed["multilingual_variants"] = {
-            "english": en_summary,
-            "german": f"Wichtige Mitteilung ({first_line}): Bitte prüfen Sie die wesentlichen Details dieses Updates und ergreifen Sie die erforderlichen Schritte über das offizielle Portal.",
-            "french": f"Information importante ({first_line}) : Veuillez consulter les détails clés de cette mise à jour et effectuer les démarches nécessaires via le portail officiel.",
-            "spanish": f"Aviso importante ({first_line}): Revise los detalles principales de esta actualización y complete las acciones requeridas a través del portal oficial."
+            "english": (ml.get("english") if isinstance(ml, dict) else None) or en_summary,
+            "german": (ml.get("german") if isinstance(ml, dict) else None) or f"Wichtige Mitteilung ({first_line}): Bitte prüfen Sie die wesentlichen Details dieses Updates und ergreifen Sie die erforderlichen Schritte über das offizielle Portal.",
+            "french": (ml.get("french") if isinstance(ml, dict) else None) or f"Information importante ({first_line}) : Veuillez consulter les détails clés de cette mise à jour et effectuer les démarches nécessaires via le portail officiel.",
+            "spanish": (ml.get("spanish") if isinstance(ml, dict) else None) or f"Aviso importante ({first_line}): Revise los detalles principales de esta actualización y complete las acciones requeridas a través del portal oficial.",
+            "japanese": (ml.get("japanese") if isinstance(ml, dict) else None) or f"重要なお知らせ（{first_line}）：本案内の主要な詳細をご確認のうえ、公式ポータルより必要な手続きを行ってください。"
         }
 
     return parsed
@@ -487,7 +489,7 @@ def adapt_message(content: str, file_name: str = "", conversation_history: list 
 
         prompt_text = (
             f"Adapt the following content into all 7 enterprise channels, verify facts in `fact_checker`, "
-            f"evaluate `brand_voice`, build `quality_compliance_report`, and generate `multilingual_variants` in English, German, French, and Spanish.\n"
+            f"evaluate `brand_voice`, build `quality_compliance_report`, and generate `multilingual_variants` in English, German, French, Spanish, and Japanese.\n"
         )
         if file_name:
             prompt_text += f"[SOURCE ATTACHMENT: {file_name}]\n"

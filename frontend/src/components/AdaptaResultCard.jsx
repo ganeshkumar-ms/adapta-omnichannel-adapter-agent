@@ -494,7 +494,8 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
     english: rawMl.english || `${summary}\n\nPrimary Message: ${voiced.smsText || rawEmailBody.slice(0, 220)}`,
     german: rawMl.german || `Wichtige Unternehmensmitteilung (${baseHeadline}): Alle wesentlichen Details, Termine und Hinweise dieser Mitteilung wurden überprüft. Bitte nutzen Sie den offiziellen Link für weitere Informationen.`,
     french: rawMl.french || `Communication officielle (${baseHeadline}) : L'ensemble des informations clés, dates et modalités de cette annonce ont été vérifiés. Veuillez consulter le portail officiel pour plus de détails.`,
-    spanish: rawMl.spanish || `Comunicado corporativo (${baseHeadline}): Todos los detalles clave, fechas y condiciones de este aviso han sido verificados. Consulte el portal oficial para obtener la información completa.`
+    spanish: rawMl.spanish || `Comunicado corporativo (${baseHeadline}): Todos los detalles clave, fechas y condiciones de este aviso han sido verificados. Consulte el portal oficial para obtener la información completa.`,
+    japanese: rawMl.japanese || `重要なお知らせ（${baseHeadline}）：本通知の主要な詳細・日程・条件はすべて確認済みです。詳細およびお手続きについては、公式ポータルをご確認ください。`
   }
 
   function copyText(text, key) {
@@ -1354,7 +1355,8 @@ export default function AdaptaResultCard({ data, guardrails: propGuardrails }) {
             { key: 'english', label: 'English' },
             { key: 'german', label: 'German (Deutsch)' },
             { key: 'french', label: 'French (Français)' },
-            { key: 'spanish', label: 'Spanish (Español)' }
+            { key: 'spanish', label: 'Spanish (Español)' },
+            { key: 'japanese', label: 'Japanese (日本語)' }
           ].map(l => (
             <button
               key={l.key}
