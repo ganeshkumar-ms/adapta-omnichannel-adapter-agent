@@ -30,8 +30,10 @@ ADAPTA_SYSTEM_PROMPT = """You are ADAPTA, an Enterprise AI Omnichannel Message A
 Your mission is to take any corporate announcement, policy update, product launch, regulatory notice, campaign brief, or uploaded document and adapt it into **7 ready-to-use channel messages** while enforcing:
 1. Brand Voice consistency
 2. Strict Fact Checking (preserving all dates, monetary amounts, numbers, SLAs, and factual claims without alteration)
+   - CRITICAL FOR SHORT CHANNELS (SMS, Push, In-App, X): NEVER omit the primary monetary amount (e.g. Rs. 4,88,250), due date/deadline (e.g. within 7 days / by 26 Nov), or account/reference ID when present in the source.
+   - ZERO PLACEHOLDERS: NEVER invent fake phone numbers or placeholders like `1800-XXX-XXXX`, `[link]`, `[number]`, or `[portal]`. Only use contact details that actually exist in the source (or "via payment portal / branch").
 3. Compliance Guardrails & Quality Verification
-4. Multilingual Support (English, Tamil, Hindi, Malayalam)
+4. Multilingual Support (English, German, French, Spanish, Japanese)
 5. Target Audience & CTA Optimization
 6. Approval Workflow & Publishing Readiness
 
@@ -281,10 +283,100 @@ def _extract_source_facts(source_text: str) -> list:
     return facts[:5]
 
 
+def _extract_key_amount_deadline_ref(source_text: str) -> tuple[str, str, str]:
+    clean = re.sub(r'\s+', ' ', (source_text or '')).strip()
+
+    # 1. Primary monetary amount (prefer Total Amount Due / full amount)
+    amt = ''
+    m_total = re.search(
+        r'(?:total\s+amount\s+due(?:\s+now)?|full\s+amount\s+of|amount\s+due)\s*[:=\-]?\s*((?:Rs\.?|INR|\$|€|£)\s?\d[\d,]*(?:\.\d{1,2})?)',
+        clean, re.I
+    )
+    if m_total:
+        amt = m_total.group(1).strip()
+    else:
+        m_any = re.search(r'((?:Rs\.?|INR|\$|€|£)\s?\d[\d,]*(?:\.\d{1,2})?)', clean, re.I)
+        if m_any:
+            amt = m_any.group(1).strip()
+
+    # 2. Primary deadline / due date
+    deadline = ''
+    m_dl = re.search(
+        r'(within\s+\d+\s+(?:calendar\s+|business\s+|working\s+)?days|\b(?:by|on\s+or\s+before|due\s+date[:\s]*)\s*(?:\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4}))',
+        clean, re.I
+    )
+    if m_dl:
+        deadline = re.sub(r'^due\s+date[:\s]*', '', m_dl.group(1), flags=re.I).strip()
+        if not re.match(r'^(?:within|by|on)\b', deadline, re.I):
+            deadline = f'by {deadline}'
+
+    # 3. Account / Loan / Ref ID
+    ref_id = ''
+    m_ref = re.search(r'\b([A-Z]{2,5}-\d{4}-\d{3,8})\b', clean)
+    if m_ref:
+        ref_id = m_ref.group(1)
+
+    return amt, deadline, ref_id
+
+
+def _strip_fake_placeholders(text: str) -> str:
+    if not isinstance(text, str):
+        return text
+    s = re.sub(r'\b1800-[Xx*]{3,4}-[Xx*]{3,4}\b', 'our payment portal', text)
+    s = re.sub(r'\[(?:link|url|number|phone|portal\s*link)\]', 'payment portal', s, flags=re.I)
+    s = re.sub(r'\s{2,}', ' ', s).strip()
+    return s
+
+
 def _enrich_enterprise_adapta_payload(parsed: dict, source_text: str, file_name: str = "") -> dict:
     """Ensures all 6 enterprise features (Brand Voice, Fact Checker, Compliance Guardrails, Multilingual Support, Approval Workflow metadata, Publishing & Analytics) are always present."""
     clean = re.sub(r'\s+', ' ', (source_text or '')).strip()
     first_line = (clean.split('.')[0] if clean else (file_name or "Enterprise Announcement"))[:70].strip()
+
+    # Deterministic check: ensure SMS, Push, and In-App always carry the key amount & due date/deadline and zero fake placeholders
+    amt, deadline, ref_id = _extract_key_amount_deadline_ref(source_text)
+    channels = parsed.get("channels")
+    if isinstance(channels, dict):
+        # Clean fake placeholders across all channel strings
+        for ch_obj in channels.values():
+            if isinstance(ch_obj, dict):
+                for k, v in list(ch_obj.items()):
+                    if isinstance(v, str):
+                        ch_obj[k] = _strip_fake_placeholders(v)
+
+        if amt or deadline:
+            sms_obj = channels.get("sms")
+            if isinstance(sms_obj, dict):
+                sms_txt = sms_obj.get("text", "")
+                missing_amt = bool(amt and amt.lower().replace(' ', '') not in sms_txt.lower().replace(' ', ''))
+                missing_dl = bool(deadline and deadline.lower() not in sms_txt.lower() and not re.search(r'\b\d+\s*days?\b', sms_txt, re.I))
+                if missing_amt or missing_dl:
+                    acct_part = f"Acct {ref_id}: " if ref_id else ""
+                    amt_part = f"Pay {amt} " if amt else "Action required "
+                    dl_part = f"{deadline}. " if deadline else ""
+                    rebuilt = f"{acct_part}{amt_part}{dl_part}Pay via portal or branch. Reply STOP to opt out."
+                    if len(rebuilt) > 160:
+                        rebuilt = f"{acct_part}{amt_part}{dl_part}Reply STOP to opt out."
+                    sms_obj["text"] = rebuilt[:160]
+                    sms_obj["char_count"] = len(sms_obj["text"])
+
+            push_obj = channels.get("push")
+            if isinstance(push_obj, dict):
+                p_body = push_obj.get("body", "")
+                missing_amt = bool(amt and amt.lower().replace(' ', '') not in p_body.lower().replace(' ', ''))
+                missing_dl = bool(deadline and deadline.lower() not in p_body.lower())
+                if missing_amt or missing_dl:
+                    acct_part = f"Acct {ref_id}: " if ref_id else ""
+                    push_obj["body"] = f"{acct_part}{amt} due {deadline}. Tap to review.".replace("due by ", "by ").strip()[:105]
+
+            in_app_obj = channels.get("in_app")
+            if isinstance(in_app_obj, dict):
+                ia_body = in_app_obj.get("body", "")
+                missing_amt = bool(amt and amt.lower().replace(' ', '') not in ia_body.lower().replace(' ', ''))
+                missing_dl = bool(deadline and deadline.lower() not in ia_body.lower())
+                if missing_amt or missing_dl:
+                    acct_part = f"Acct {ref_id} — " if ref_id else ""
+                    in_app_obj["body"] = f"{acct_part}Amount due: {amt} ({deadline}). Review payment options now.".strip()[:140]
 
     if "campaign_strategy" not in parsed or not isinstance(parsed.get("campaign_strategy"), dict):
         parsed["campaign_strategy"] = {
@@ -503,18 +595,25 @@ def adapt_message(content: str, file_name: str = "", conversation_history: list 
             "content": [{"text": prompt_text}]
         })
 
+        # The frontend already includes the current user turn (often just the file name) at the end of
+        # the history. Strict user/assistant alternation used to DROP the real prompt (with the document
+        # content), so the model only saw a filename and hallucinated "$500 / Oct 15". Always make the
+        # LAST message the full prompt that carries the extracted document text.
         sanitized_messages = []
         expected_role = 'user'
-        for m in messages:
+        for m in messages[:-1]:
             if m['role'] == expected_role:
                 sanitized_messages.append(m)
                 expected_role = 'assistant' if expected_role == 'user' else 'user'
 
-        if not sanitized_messages:
-            sanitized_messages = [{
-                "role": "user",
-                "content": [{"text": prompt_text}]
-            }]
+        if sanitized_messages and sanitized_messages[-1]['role'] == 'user':
+            sanitized_messages.pop()  # drop duplicate/stub user turn (e.g. only the filename)
+        sanitized_messages.append({
+            "role": "user",
+            "content": [{"text": prompt_text}]
+        })
+        while sanitized_messages and sanitized_messages[0]['role'] != 'user':
+            sanitized_messages.pop(0)
 
         try:
             response = client.converse(

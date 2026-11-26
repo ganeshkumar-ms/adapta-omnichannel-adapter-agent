@@ -176,7 +176,7 @@ export default function App() {
 
   const [currentSessionId, setCurrentSessionId] = useState(null)
   const [messages, setMessages] = useState([])
-  const [title, setTitle] = useState('New Adaptation')
+  const [title, setTitle] = useState('New conversation')
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
   const [inputVal, setInputVal] = useState('')
@@ -206,7 +206,9 @@ export default function App() {
       const aiCards = container.querySelectorAll('.bubble.ai')
       if (aiCards.length > 0) {
         const lastAi = aiCards[aiCards.length - 1]
-        const targetTop = Math.max(0, lastAi.offsetTop - 16)
+        const containerRect = container.getBoundingClientRect()
+        const aiRect = lastAi.getBoundingClientRect()
+        const targetTop = Math.max(0, container.scrollTop + (aiRect.top - containerRect.top) - 16)
         container.scrollTo({ top: targetTop, behavior: 'smooth' })
       } else {
         container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
@@ -233,7 +235,7 @@ export default function App() {
   function handleNewChat() {
     setCurrentSessionId(null)
     setMessages([])
-    setTitle('New Adaptation')
+    setTitle('New conversation')
     setEditingTitle(false)
     setTitleDraft('')
     setSelectedFile(null)
@@ -246,7 +248,7 @@ export default function App() {
     if (!sess) return
     setCurrentSessionId(sess.id)
     setMessages(sess.messages || [])
-    setTitle(sess.title || 'New Adaptation')
+    setTitle(sess.title || 'New conversation')
     setEditingTitle(false)
     setTitleDraft('')
     setSelectedFile(null)
@@ -274,9 +276,23 @@ export default function App() {
   }
 
   function handleDeleteSession(id) {
-    setSessions(prev => prev.filter(s => s.id !== id))
+    const idx = sessions.findIndex(s => s.id === id)
+    const remaining = sessions.filter(s => s.id !== id)
+    setSessions(remaining)
     if (currentSessionId === id) {
-      handleNewChat()
+      if (remaining.length > 0) {
+        const nextSess = remaining[idx >= 0 && idx < remaining.length ? idx : remaining.length - 1]
+        setCurrentSessionId(nextSess.id)
+        setMessages(nextSess.messages || [])
+        setTitle(nextSess.title || 'New conversation')
+        setEditingTitle(false)
+        setTitleDraft('')
+        setSelectedFile(null)
+        setActiveViewerDoc(null)
+        setView('chat')
+      } else {
+        handleNewChat()
+      }
     }
   }
 
@@ -313,9 +329,9 @@ export default function App() {
     const cleanText = (textToSend || '').trim()
     if (!cleanText && !fileToSend) return
 
-    const isHomeStart = view === 'home' || !targetSessionId
-    const activeId = (!isHomeStart && targetSessionId) ? targetSessionId : ('adapta_' + Date.now())
-    if (isHomeStart) {
+    const isHomeStart = !targetSessionId
+    const activeId = targetSessionId || ('adapta_' + Date.now())
+    if (isHomeStart || view === 'home') {
       setCurrentSessionId(activeId)
       setView('chat')
     }
@@ -638,11 +654,21 @@ export default function App() {
 
               {/* Messages Area */}
               <div className="messages" id="messages" aria-live="polite">
-                {messages.length === 0 && (
-                  <div className="card emptyCard" style={{ margin: '40px auto' }}>
-                    <small>EMPTY WORKSPACE</small>
-                    <b>No adaptations yet</b>
-                    <p>Message ADAPTA or attach a file below to begin adapting across all 7 channels.</p>
+                {messages.length === 0 && !loading && (
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: '#849bb4', maxWidth: '520px', margin: '0 auto', padding: '24px' }}>
+                    <div style={{ display: 'inline-flex', padding: '13px', borderRadius: '14px', background: 'rgba(7, 140, 255, 0.1)', border: '1px solid rgba(7, 140, 255, 0.25)', color: '#38bdf8', marginBottom: '14px' }}>
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="18" cy="5" r="3" />
+                        <circle cx="6" cy="12" r="3" />
+                        <circle cx="18" cy="19" r="3" />
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                      </svg>
+                    </div>
+                    <b style={{ display: 'block', color: '#fff', fontSize: '18px' }}>Start a new omnichannel adaptation with ADAPTA</b>
+                    <p style={{ fontSize: '14.5px', lineHeight: '1.65', marginTop: '10px', marginBottom: 0 }}>
+                      Share an announcement, campaign brief, or document below to generate fact-verified copy across Outlook Email, SMS, WhatsApp, Push, LinkedIn, X, and In-App in 5 global languages.
+                    </p>
                   </div>
                 )}
 
