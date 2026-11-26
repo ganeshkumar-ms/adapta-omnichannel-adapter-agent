@@ -214,7 +214,7 @@ export default function App() {
         const lastAi = aiCards[aiCards.length - 1]
         const containerRect = container.getBoundingClientRect()
         const aiRect = lastAi.getBoundingClientRect()
-        const targetTop = Math.max(0, container.scrollTop + (aiRect.top - containerRect.top) - 44)
+        const targetTop = Math.max(0, container.scrollTop + (aiRect.top - containerRect.top) - 16)
         container.scrollTo({ top: targetTop, behavior: 'smooth' })
       } else {
         container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
