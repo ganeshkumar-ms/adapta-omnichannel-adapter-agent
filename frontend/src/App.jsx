@@ -191,6 +191,12 @@ export default function App() {
   const homeFileInputRef = useRef(null)
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.self !== window.top) {
+      document.documentElement.classList.add('in-iframe')
+    }
+  }, [])
+
+  useEffect(() => {
     const valid = sessions.filter(s => s.messages && s.messages.length > 0)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(valid))
   }, [sessions])
@@ -208,7 +214,7 @@ export default function App() {
         const lastAi = aiCards[aiCards.length - 1]
         const containerRect = container.getBoundingClientRect()
         const aiRect = lastAi.getBoundingClientRect()
-        const targetTop = Math.max(0, container.scrollTop + (aiRect.top - containerRect.top) - 16)
+        const targetTop = Math.max(0, container.scrollTop + (aiRect.top - containerRect.top) - 44)
         container.scrollTo({ top: targetTop, behavior: 'smooth' })
       } else {
         container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
