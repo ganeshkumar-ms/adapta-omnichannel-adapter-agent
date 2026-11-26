@@ -189,13 +189,6 @@ export default function App() {
 
   const fileInputRef = useRef(null)
   const homeFileInputRef = useRef(null)
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.self !== window.top) {
-      document.documentElement.classList.add('in-iframe')
-    }
-  }, [])
-
   useEffect(() => {
     const valid = sessions.filter(s => s.messages && s.messages.length > 0)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(valid))
